@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthService from '../services/auth.service';
 import TrabajadoresService from '../services/trabajadores.service';
 import Modal from '../components/Modal';
 import './Trabajadores.css';
@@ -149,27 +150,56 @@ function Trabajadores() {
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
+    e.preventDefault();
+    setError('');
 
-        try {
-            const dataToSend = {
-                ...formData,
-                salario: formData.salario ? Number(formData.salario) : null
-            };
+    try {
+        const dataToSend = {
+            ...formData,
+            salario: formData.salario ? Number(formData.salario) : null
+        };
 
-            if (modalMode === 'create') {
-                await TrabajadoresService.create(dataToSend);
-            } else {
-                await TrabajadoresService.update(selectedTrabajador.id, dataToSend);
-            }
+        if (modalMode === 'create') {
+            // Crear trabajador
+            const trabajadorResponse = await TrabajadoresService.create(dataToSend);
             
-            await loadTrabajadores();
-            handleCloseModal();
-        } catch (err) {
-            setError(err.response?.data?.message || 'Error al guardar trabajador');
+            // ⭐ NUEVO: Si el trabajador NO es administrativo, crear usuario de autenticación
+            if (formData.cargo !== 'administrativo' && formData.email) {
+                try {
+                    const token = localStorage.getItem('accessToken');
+                    
+                    // Determinar el rol según el cargo
+                    let rol = 'recepcionista';
+                    if (formData.cargo === 'veterinario') rol = 'veterinario';
+                    else if (formData.cargo === 'enfermera') rol = 'enfermera';
+                    
+                    // Generar contraseña temporal (puedes personalizar esto)
+                    const passwordTemporal = `${formData.dni}123`;
+                    
+                    await AuthService.crearUsuarioTrabajador({
+                        email: formData.email,
+                        password: passwordTemporal,
+                        nombre: formData.nombres,
+                        apellido: formData.apellidos,
+                        rol: rol
+                    }, token);
+                    
+                    alert(`✅ Trabajador y usuario creados exitosamente.\n\n📧 Email: ${formData.email}\n🔑 Contraseña temporal: ${passwordTemporal}\n\n⚠️ Se recomienda cambiar la contraseña en el primer inicio de sesión.`);
+                } catch (authError) {
+                    console.error('Error al crear usuario:', authError);
+                    alert('⚠️ Trabajador creado, pero hubo un error al crear el usuario de autenticación. Por favor, créalo manualmente.');
+                }
+            }
+        } else {
+            await TrabajadoresService.update(selectedTrabajador.id, dataToSend);
         }
-    };
+        
+        await loadTrabajadores();
+        handleCloseModal();
+    } catch (err) {
+        setError(err.response?.data?.message || 'Error al guardar trabajador');
+    }
+};
 
     const handleHorarioSubmit = async (e) => {
         e.preventDefault();
@@ -504,8 +534,14 @@ function Trabajadores() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
+                                required={modalMode === 'create'} 
                                 placeholder="trabajador@vetclinic.com"
                             />
+                            {modalMode === 'create' && (
+        <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+            Se creará un usuario con esta dirección de email para acceder al sistema
+        </small>
+    )}
                         </div>
                     </div>
 

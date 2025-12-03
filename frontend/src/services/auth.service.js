@@ -23,6 +23,16 @@ class AuthService {
         return response.data;
     }
 
+    // ⭐ NUEVO: Crear usuario desde admin
+    async crearUsuarioTrabajador(userData, token) {
+        const response = await axios.post(`${API_URL}/auth/register`, userData, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        return response.data;
+    }
+
     logout() {
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
