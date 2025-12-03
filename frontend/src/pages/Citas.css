@@ -1,0 +1,84 @@
+.estado-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.btn-view, .btn-confirm, .btn-start, .btn-complete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 8px;
+    transition: all 0.3s;
+}
+
+.btn-view:hover {
+    transform: scale(1.2);
+}
+
+.btn-confirm {
+    filter: grayscale(0.5);
+}
+
+.btn-confirm:hover {
+    filter: grayscale(0);
+    transform: scale(1.2);
+}
+
+.btn-start, .btn-complete {
+    filter: grayscale(0.5);
+}
+
+.btn-start:hover, .btn-complete:hover {
+    filter: grayscale(0);
+    transform: scale(1.2);
+}
+
+.detalle-cita {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.detalle-section {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+}
+
+.detalle-section h3 {
+    margin: 0 0 12px 0;
+    color: #667eea;
+    font-size: 16px;
+}
+
+.detalle-section p {
+    margin: 8px 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.detalle-section p strong {
+    color: #666;
+    margin-right: 8px;
+}
+
+.detalle-section .precio {
+    font-size: 24px;
+    font-weight: 700;
+    color: #4CAF50;
+    margin: 0;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 4px;
+    color: #666;
+    font-size: 12px;
+}

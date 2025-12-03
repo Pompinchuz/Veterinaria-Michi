@@ -7,69 +7,75 @@ const TRABAJADORES_SERVICE_URL = process.env.TRABAJADORES_SERVICE_URL;
 class ExternosService {
 
     // Verificar que el cliente existe
-    static async verificarCliente(dni) {
+    static async verificarCliente(dni, token) {
         try {
-            const respuesta = await axios.get(`${CLIENTES_SERVICE_URL}/api/clientes/dni/${dni}`);
+            console.log('🔍 Verificando cliente con DNI:', dni);
+            const respuesta = await axios.get(`${CLIENTES_SERVICE_URL}/api/clientes/dni/${dni}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             return respuesta.data.data;
         } catch (error) {
+            console.error('❌ Error al verificar cliente:', error.response?.data || error.message);
             if (error.response && error.response.status === 404) {
                 return null;
             }
-            console.error('Error al verificar cliente:', error.message);
             throw new Error('Error al comunicarse con el servicio de clientes');
         }
     }
 
     // Verificar que la mascota existe
-    static async verificarMascota(mascotaId) {
+    static async verificarMascota(mascotaId, token) {
         try {
-            const respuesta = await axios.get(`${MASCOTAS_SERVICE_URL}/api/mascotas/${mascotaId}`);
+            console.log('🔍 Verificando mascota con ID:', mascotaId);
+            const respuesta = await axios.get(`${MASCOTAS_SERVICE_URL}/api/mascotas/${mascotaId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             return respuesta.data.data;
         } catch (error) {
+            console.error('❌ Error al verificar mascota:', error.response?.data || error.message);
             if (error.response && error.response.status === 404) {
                 return null;
             }
-            console.error('Error al verificar mascota:', error.message);
             throw new Error('Error al comunicarse con el servicio de mascotas');
         }
     }
 
     // Verificar que el veterinario existe
-    static async verificarVeterinario(veterinarioId) {
+    static async verificarVeterinario(veterinarioId, token) {
         try {
-            const respuesta = await axios.get(`${TRABAJADORES_SERVICE_URL}/api/trabajadores/${veterinarioId}`);
+            console.log('🔍 Verificando veterinario con ID:', veterinarioId);
+            const respuesta = await axios.get(`${TRABAJADORES_SERVICE_URL}/api/trabajadores/${veterinarioId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
             const trabajador = respuesta.data.data;
             
-            // Verificar que sea veterinario
+            // Verificar que es veterinario
             if (trabajador.cargo !== 'veterinario') {
+                console.error('❌ El trabajador no es veterinario, cargo:', trabajador.cargo);
                 return { error: 'El trabajador no es veterinario' };
             }
             
             return trabajador;
         } catch (error) {
+            console.error('❌ Error al verificar veterinario:', error.response?.data || error.message);
             if (error.response && error.response.status === 404) {
                 return null;
             }
-            console.error('Error al verificar veterinario:', error.message);
             throw new Error('Error al comunicarse con el servicio de trabajadores');
         }
     }
 
-    // Obtener horarios del veterinario
-    static async obtenerHorariosVeterinario(veterinarioId) {
-        try {
-            const respuesta = await axios.get(`${TRABAJADORES_SERVICE_URL}/api/trabajadores/${veterinarioId}/horarios`);
-            return respuesta.data.horarios;
-        } catch (error) {
-            console.error('Error al obtener horarios:', error.message);
-            return [];
-        }
-    }
-
     // Verificar que la mascota pertenece al cliente
-    static async verificarMascotaCliente(mascotaId, clienteDni) {
+    static async verificarMascotaCliente(mascotaId, clienteDni, token) {
         try {
-            const mascota = await this.verificarMascota(mascotaId);
+            const mascota = await this.verificarMascota(mascotaId, token);
             if (!mascota) {
                 return { valido: false, mensaje: 'Mascota no encontrada' };
             }
@@ -87,21 +93,33 @@ class ExternosService {
         }
     }
 
+    // Obtener horarios del veterinario
+    static async obtenerHorariosVeterinario(veterinarioId, token) {
+        try {
+            const respuesta = await axios.get(`${TRABAJADORES_SERVICE_URL}/api/trabajadores/${veterinarioId}/horarios`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return respuesta.data.horarios;
+        } catch (error) {
+            console.error('❌ Error al obtener horarios:', error.response?.data || error.message);
+            return [];
+        }
+    }
+
     // Obtener información completa para una cita
-    static async obtenerInformacionCompletaCita(clienteDni, mascotaId, veterinarioId) {
+    static async obtenerInformacionCompletaCita(clienteDni, mascotaId, veterinarioId, token) {
         try {
             const [cliente, mascota, veterinario] = await Promise.all([
-                this.verificarCliente(clienteDni),
-                this.verificarMascota(mascotaId),
-                this.verificarVeterinario(veterinarioId)
+                this.verificarCliente(clienteDni, token),
+                this.verificarMascota(mascotaId, token),
+                this.verificarVeterinario(veterinarioId, token)
             ]);
 
-            return {
-                cliente,
-                mascota,
-                veterinario
-            };
+            return { cliente, mascota, veterinario };
         } catch (error) {
+            console.error('❌ Error al obtener información completa:', error.message);
             throw error;
         }
     }

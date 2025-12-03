@@ -44,6 +44,7 @@ class CitasController {
         try {
             const { id } = req.params;
             const { incluirDetalles } = req.query;
+            const token = req.headers.authorization?.split(' ')[1];
 
             const cita = await CitaModel.obtenerPorId(id);
 
@@ -60,7 +61,8 @@ class CitasController {
                     const detalles = await ExternosService.obtenerInformacionCompletaCita(
                         cita.cliente_dni,
                         cita.mascota_id,
-                        cita.veterinario_id
+                        cita.veterinario_id,
+                        token
                     );
 
                     cita.cliente = detalles.cliente;
@@ -89,6 +91,10 @@ class CitasController {
     static async crearCita(req, res) {
         try {
             const { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
+            const token = req.headers.authorization?.split(' ')[1];
+
+            console.log('➕ Creando cita para cliente:', cliente_dni);
+            console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
 
             // Validaciones básicas
             if (!cliente_dni || !mascota_id || !veterinario_id || !fecha || !hora || !motivo) {
@@ -99,7 +105,7 @@ class CitasController {
             }
 
             // Verificar que el cliente existe
-            const cliente = await ExternosService.verificarCliente(cliente_dni);
+            const cliente = await ExternosService.verificarCliente(cliente_dni, token);
             if (!cliente) {
                 return res.status(404).json({
                     success: false,
@@ -108,7 +114,7 @@ class CitasController {
             }
 
             // Verificar que la mascota existe y pertenece al cliente
-            const verificacion = await ExternosService.verificarMascotaCliente(mascota_id, cliente_dni);
+            const verificacion = await ExternosService.verificarMascotaCliente(mascota_id, cliente_dni, token);
             if (!verificacion.valido) {
                 return res.status(400).json({
                     success: false,
@@ -117,7 +123,7 @@ class CitasController {
             }
 
             // Verificar que el veterinario existe y es veterinario
-            const veterinario = await ExternosService.verificarVeterinario(veterinario_id);
+            const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
             if (!veterinario) {
                 return res.status(404).json({
                     success: false,
@@ -150,7 +156,8 @@ class CitasController {
                 data: nuevaCita
             });
         } catch (error) {
-            console.error('Error al crear cita:', error);
+            console.error('❌ Error al crear cita:', error);
+            console.error('❌ Error completo:', error.response?.data || error.message);
             res.status(500).json({
                 success: false,
                 message: 'Error al crear cita',
@@ -164,6 +171,10 @@ class CitasController {
         try {
             const { id } = req.params;
             const { veterinario_id, fecha, hora } = req.body;
+            const token = req.headers.authorization?.split(' ')[1];
+
+            console.log('✏️ Actualizando cita:', id);
+            console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
 
             // Verificar si la cita existe
             const citaExistente = await CitaModel.obtenerPorId(id);
@@ -176,7 +187,7 @@ class CitasController {
 
             // Si se cambia veterinario, verificar que existe
             if (veterinario_id && veterinario_id !== citaExistente.veterinario_id) {
-                const veterinario = await ExternosService.verificarVeterinario(veterinario_id);
+                const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
                 if (!veterinario) {
                     return res.status(404).json({
                         success: false,
@@ -223,7 +234,8 @@ class CitasController {
                 data: citaActualizada
             });
         } catch (error) {
-            console.error('Error al actualizar cita:', error);
+            console.error('❌ Error al actualizar cita:', error);
+            console.error('❌ Error completo:', error.response?.data || error.message);
             res.status(500).json({
                 success: false,
                 message: 'Error al actualizar cita',

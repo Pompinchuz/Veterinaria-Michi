@@ -1,0 +1,159 @@
+.trabajadores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+}
+
+.trabajador-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.trabajador-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.trabajador-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.trabajador-emoji {
+    font-size: 48px;
+}
+
+.trabajador-info {
+    flex: 1;
+}
+
+.trabajador-info h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.cargo-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.trabajador-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.estado-activo {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.estado-inactivo {
+    color: #F44336;
+    font-weight: 600;
+}
+
+.trabajador-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.trabajador-actions button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s;
+}
+
+.btn-horarios {
+    background: #9C27B0;
+    color: white;
+}
+
+.btn-horarios:hover {
+    background: #7B1FA2;
+}
+
+.horarios-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.no-horarios {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+    font-size: 16px;
+}
+
+.horarios-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.horario-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #9C27B0;
+}
+
+.horario-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.horario-info strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.horario-info span {
+    color: #666;
+    font-size: 13px;
+}
+
+.btn-delete-small {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn-delete-small:hover {
+    background: #d32f2f;
+}
+
+@media (max-width: 768px) {
+    .trabajadores-grid {
+        grid-template-columns: 1fr;
+    }
+}
