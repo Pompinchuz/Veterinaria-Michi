@@ -18,12 +18,20 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+     // ⭐ NUEVO: Obtener la ruta por defecto según el rol
+    const getDefaultRoute = () => {
+        if (!user) return '/login';
+        if (user.rol === 'cliente') return '/portal-cliente';
+        return '/dashboard';
+    };
+
     const value = {
         user,
         login,
         logout,
         loading,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        getDefaultRoute
     };
 
     return (

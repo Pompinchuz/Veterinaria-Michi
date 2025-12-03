@@ -6,6 +6,9 @@ const AuthMiddleware = require('../middleware/auth.middleware');
 // Aplicar autenticación a todas las rutas
 router.use(AuthMiddleware.verificarToken);
 
+// ⭐ NUEVO: Ruta para que el cliente obtenga su propio perfil
+router.get('/mi-perfil', ClientesController.getMiPerfil);
+
 // Rutas de clientes - requieren ser personal (admin, veterinario, enfermera, recepcionista)
 router.get('/', 
     AuthMiddleware.esPersonal,
@@ -22,8 +25,8 @@ router.get('/:id',
     ClientesController.getClienteById
 );
 
+// ⭐ Permite que cliente cree su propio perfil O que el personal cree clientes
 router.post('/', 
-    AuthMiddleware.esPersonal,
     ClientesController.createCliente
 );
 

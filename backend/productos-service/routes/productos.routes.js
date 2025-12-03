@@ -8,28 +8,23 @@ router.use(AuthMiddleware.verificarToken);
 
 // Rutas especiales (deben ir antes de las rutas con :id)
 router.get('/categorias/lista', 
-    AuthMiddleware.esPersonal,
     ProductosController.obtenerCategorias
 );
 
 router.get('/buscar/:termino', 
-    AuthMiddleware.esPersonal,
     ProductosController.buscarProductos
 );
 
 router.get('/codigo/:codigoBarras', 
-    AuthMiddleware.esPersonal,
     ProductosController.obtenerProductoPorCodigo
 );
 
-// Rutas principales - Personal puede ver productos
+// ⭐ Rutas de lectura - TODOS pueden ver productos (incluido cliente)
 router.get('/', 
-    AuthMiddleware.esPersonal,
     ProductosController.obtenerTodosProductos
 );
 
 router.get('/:id', 
-    AuthMiddleware.esPersonal,
     ProductosController.obtenerProductoPorId
 );
 

@@ -1,0 +1,272 @@
+.portal-container {
+    min-height: 100vh;
+    background: #f5f7fa;
+}
+
+.portal-navbar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 16px 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.portal-navbar .navbar-brand h2 {
+    margin: 0;
+    color: white;
+    font-size: 24px;
+}
+
+.welcome-text {
+    color: white;
+    margin-right: 16px;
+}
+
+.welcome-text strong {
+    font-weight: 700;
+}
+
+.portal-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.portal-header {
+    margin-bottom: 32px;
+}
+
+.portal-header h1 {
+    color: #333;
+    margin: 0 0 16px 0;
+}
+
+.cliente-info-box {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: inline-block;
+}
+
+.cliente-info-box p {
+    margin: 4px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.portal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.tab {
+    padding: 12px 24px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    font-size: 16px;
+}
+
+.tab:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.portal-tab-content {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-height: 400px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.empty-state p {
+    font-size: 20px;
+    margin: 0 0 8px 0;
+}
+
+.empty-state small {
+    color: #999;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.mascota-card-portal,
+.producto-card-portal {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+.mascota-card-portal:hover,
+.producto-card-portal:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.mascota-header-portal {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.mascota-header-portal h3 {
+    margin: 0 0 4px 0;
+    color: #333;
+}
+
+.mascota-especie {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #667eea;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    text-transform: capitalize;
+}
+
+.mascota-details-portal p {
+    margin: 8px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.citas-table {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cita-card-portal {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+}
+
+.cita-fecha {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cita-fecha .fecha {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.cita-fecha .hora {
+    font-size: 24px;
+    font-weight: 700;
+    color: #667eea;
+}
+
+.cita-info p {
+    margin: 8px 0;
+    color: #666;
+}
+
+.productos-info {
+    background: #e3f2fd;
+    padding: 12px;
+    border-radius: 8px;
+    color: #1976d2;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.producto-card-portal h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+}
+
+.producto-categoria {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #FF9800;
+    color: white;
+    border-radius: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.producto-precio {
+    font-size: 24px;
+    font-weight: 700;
+    color: #4CAF50;
+    margin: 12px 0;
+}
+
+.producto-desc {
+    font-size: 13px;
+    color: #666;
+    margin: 8px 0;
+}
+
+.stock-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.stock-badge.disponible {
+    background: #e8f5e9;
+    color: #4CAF50;
+}
+
+.stock-badge.agotado {
+    background: #ffebee;
+    color: #f44336;
+}
+
+.loading-portal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-size: 20px;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .cita-card-portal {
+        grid-template-columns: 1fr;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
