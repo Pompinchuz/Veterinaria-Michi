@@ -1,0 +1,467 @@
+Documentación Completa de Endpoints - Sistema Veterinaria
+
+📡 Servicios Disponibles
+ServicioPuertoBase de DatosURL BaseClientes3001MySQLhttp://localhost:3001/api/clientesMascotas3002MongoDBhttp://localhost:3002/api/mascotasProductos3003MongoDBhttp://localhost:3003/api/productosTrabajadores3004MySQLhttp://localhost:3004/api/trabajadoresCitas3005MySQLhttp://localhost:3005/api/citas
+
+🏥 SERVICIO DE CLIENTES (Puerto 3001)
+Base URL: http://localhost:3001/api/clientes
+📋 Obtener todos los clientes
+httpGET /api/clientes
+Respuesta:
+json{
+    "success": true,
+    "data": [...],
+    "count": 3
+}
+
+🔍 Buscar cliente por DNI
+httpGET /api/clientes/dni/:dni
+Ejemplo:
+httpGET /api/clientes/dni/12345678
+Respuesta:
+json{
+    "success": true,
+    "data": {
+        "id": 1,
+        "dni": "12345678",
+        "nombres": "Juan Carlos",
+        "apellidos": "Pérez López",
+        "telefono": "987654321",
+        "email": "juan.perez@email.com",
+        "direccion": "Av. Principal 123",
+        "created_at": "2025-12-02T22:58:16.000Z",
+        "updated_at": "2025-12-02T22:58:16.000Z"
+    }
+}
+
+🔍 Buscar cliente por ID
+httpGET /api/clientes/:id
+
+➕ Crear nuevo cliente
+httpPOST /api/clientes
+Content-Type: application/json
+Body:
+json{
+    "dni": "12345678",
+    "nombres": "Juan Carlos",
+    "apellidos": "Pérez López",
+    "telefono": "987654321",
+    "email": "juan.perez@email.com",
+    "direccion": "Av. Principal 123"
+}
+Campos obligatorios: dni, nombres, apellidos
+
+✏️ Actualizar cliente
+httpPUT /api/clientes/:id
+Content-Type: application/json
+Body:
+json{
+    "nombres": "Juan Carlos",
+    "apellidos": "Pérez López",
+    "telefono": "999888777",
+    "email": "juan.nuevo@email.com",
+    "direccion": "Nueva dirección 456"
+}
+
+🗑️ Eliminar cliente
+httpDELETE /api/clientes/:id
+
+🐾 SERVICIO DE MASCOTAS (Puerto 3002)
+Base URL: http://localhost:3002/api/mascotas
+📋 Obtener todas las mascotas
+httpGET /api/mascotas
+
+🔍 Buscar mascota por ID
+httpGET /api/mascotas/:id
+
+🔍 Obtener mascotas por DNI del cliente
+httpGET /api/mascotas/cliente/:dni
+Ejemplo:
+httpGET /api/mascotas/cliente/12345678
+Respuesta:
+json{
+    "success": true,
+    "cliente": {
+        "dni": "12345678",
+        "nombres": "Juan Carlos",
+        "apellidos": "Pérez López"
+    },
+    "mascotas": [...],
+    "count": 2
+}
+
+➕ Crear nueva mascota
+httpPOST /api/mascotas
+Content-Type: application/json
+Body:
+json{
+    "nombre": "Firulais",
+    "especie": "perro",
+    "raza": "Labrador",
+    "edad": 3,
+    "peso": 25.5,
+    "sexo": "macho",
+    "color": "dorado",
+    "clienteDni": "12345678",
+    "observaciones": "Mascota muy activa y juguetona"
+}
+Campos obligatorios: nombre, especie, clienteDni
+Valores válidos para especie: perro, gato, ave, conejo, hamster, otro
+
+✏️ Actualizar mascota
+httpPUT /api/mascotas/:id
+Content-Type: application/json
+Body:
+json{
+    "peso": 26.0,
+    "observaciones": "Ha ganado peso después del tratamiento"
+}
+
+🗑️ Eliminar mascota (soft delete)
+httpDELETE /api/mascotas/:id
+
+💉 Agregar vacuna a mascota
+httpPOST /api/mascotas/:id/vacunas
+Content-Type: application/json
+Body:
+json{
+    "nombre": "Rabia",
+    "fecha": "2024-12-01",
+    "proximaDosis": "2025-12-01",
+    "lote": "RAB-2024-001",
+    "veterinario": "Dr. Carlos Mendoza"
+}
+
+📝 Agregar entrada al historial médico
+httpPOST /api/mascotas/:id/historial
+Content-Type: application/json
+Body:
+json{
+    "descripcion": "Revisión general de rutina",
+    "veterinario": "Dra. Ana López",
+    "diagnostico": "Estado de salud óptimo",
+    "tratamiento": "Ninguno requerido. Continuar con alimentación balanceada"
+}
+
+🛒 SERVICIO DE PRODUCTOS (Puerto 3003)
+Base URL: http://localhost:3003/api/productos
+📋 Obtener todos los productos
+httpGET /api/productos
+
+🔍 Filtrar por categoría
+httpGET /api/productos?categoria=alimento
+Categorías válidas: alimento, juguete, medicina, accesorio, higiene, otro
+
+🔍 Filtrar productos con stock bajo
+httpGET /api/productos?stockBajo=true
+
+🔍 Buscar producto por ID
+httpGET /api/productos/:id
+
+🔍 Buscar por código de barras
+httpGET /api/productos/codigo/:codigoBarras
+Ejemplo:
+httpGET /api/productos/codigo/7501234567890
+
+🔍 Buscar productos por nombre
+httpGET /api/productos/buscar/:termino
+Ejemplo:
+httpGET /api/productos/buscar/pelota
+
+📂 Obtener lista de categorías
+httpGET /api/productos/categorias/lista
+
+➕ Crear nuevo producto
+httpPOST /api/productos
+Content-Type: application/json
+Body:
+json{
+    "nombre": "Alimento Premium Perro Adulto",
+    "categoria": "alimento",
+    "subcategoria": "Comida seca",
+    "descripcion": "Alimento balanceado para perros adultos",
+    "precio": 85.50,
+    "stock": 50,
+    "stockMinimo": 10,
+    "unidadMedida": "kilogramo",
+    "marca": "Ricocan",
+    "proveedor": "Distribuidora Pet SA",
+    "codigoBarras": "7501234567890",
+    "atributos": {
+        "peso": "15kg",
+        "sabor": "pollo y arroz",
+        "tipoAnimal": "perro"
+    }
+}
+Campos obligatorios: nombre, categoria, precio, stock
+
+✏️ Actualizar producto
+httpPUT /api/productos/:id
+Content-Type: application/json
+Body:
+json{
+    "precio": 89.90,
+    "descripcion": "Alimento premium actualizado"
+}
+
+📦 Actualizar stock
+httpPATCH /api/productos/:id/stock
+Content-Type: application/json
+Sumar al stock:
+json{
+    "cantidad": 20,
+    "operacion": "sumar"
+}
+Restar del stock:
+json{
+    "cantidad": 5,
+    "operacion": "restar"
+}
+Establecer stock directamente:
+json{
+    "cantidad": 100
+}
+
+🗑️ Eliminar producto (soft delete)
+httpDELETE /api/productos/:id
+
+👨‍⚕️ SERVICIO DE TRABAJADORES (Puerto 3004)
+Base URL: http://localhost:3004/api/trabajadores
+📋 Obtener todos los trabajadores
+httpGET /api/trabajadores
+
+🔍 Filtrar por cargo
+httpGET /api/trabajadores?cargo=veterinario
+Cargos válidos: veterinario, enfermera, administrativo, recepcionista
+
+🔍 Buscar trabajador por DNI
+httpGET /api/trabajadores/dni/:dni
+
+🔍 Buscar trabajador por ID
+httpGET /api/trabajadores/:id
+
+🔍 Obtener trabajador con sus horarios
+httpGET /api/trabajadores/:id?incluirHorarios=true
+
+➕ Crear nuevo trabajador
+httpPOST /api/trabajadores
+Content-Type: application/json
+Body:
+json{
+    "dni": "88888888",
+    "nombres": "Roberto Carlos",
+    "apellidos": "Sánchez Pérez",
+    "cargo": "veterinario",
+    "especialidad": "Traumatología",
+    "telefono": "987888888",
+    "email": "roberto.sanchez@vetclinic.com",
+    "direccion": "Av. Los Laureles 456",
+    "fecha_ingreso": "2024-01-15",
+    "salario": 3600.00
+}
+Campos obligatorios: dni, nombres, apellidos, cargo
+
+✏️ Actualizar trabajador
+httpPUT /api/trabajadores/:id
+Content-Type: application/json
+Body:
+json{
+    "nombres": "Roberto Carlos",
+    "apellidos": "Sánchez Pérez",
+    "cargo": "veterinario",
+    "especialidad": "Traumatología y Ortopedia",
+    "salario": 3800.00
+}
+
+🗑️ Eliminar trabajador (soft delete)
+httpDELETE /api/trabajadores/:id
+
+🕐 Obtener horarios de un trabajador
+httpGET /api/trabajadores/:id/horarios
+Respuesta:
+json{
+    "success": true,
+    "trabajador": {
+        "id": 1,
+        "nombres": "Carlos Alberto",
+        "apellidos": "Mendoza Ruiz",
+        "cargo": "veterinario"
+    },
+    "horarios": [
+        {
+            "id": 1,
+            "trabajador_id": 1,
+            "dia_semana": "lunes",
+            "hora_inicio": "09:00:00",
+            "hora_fin": "18:00:00",
+            "activo": true
+        }
+    ],
+    "count": 5
+}
+
+➕ Agregar horario a trabajador
+httpPOST /api/trabajadores/:id/horarios
+Content-Type: application/json
+Body:
+json{
+    "dia_semana": "lunes",
+    "hora_inicio": "08:00:00",
+    "hora_fin": "16:00:00"
+}
+Días válidos: lunes, martes, miercoles, jueves, viernes, sabado, domingo
+
+🗑️ Eliminar horario
+httpDELETE /api/trabajadores/:id/horarios/:horarioId
+
+📅 SERVICIO DE CITAS (Puerto 3005)
+Base URL: http://localhost:3005/api/citas
+📋 Obtener todas las citas
+httpGET /api/citas
+
+🔍 Filtrar por estado
+httpGET /api/citas?estado=pendiente
+Estados válidos: pendiente, confirmada, en_curso, completada, cancelada
+
+🔍 Filtrar por fecha
+httpGET /api/citas?fecha=2024-12-05
+
+🔍 Filtrar por cliente
+httpGET /api/citas?clienteDni=12345678
+
+🔍 Filtrar por mascota
+httpGET /api/citas?mascotaId=692fa90a8ebd11706aed581a
+
+🔍 Filtrar por veterinario
+httpGET /api/citas?veterinarioId=1
+
+🔍 Obtener cita por ID
+httpGET /api/citas/:id
+
+🔍 Obtener cita con detalles completos
+httpGET /api/citas/:id?incluirDetalles=true
+Respuesta incluye: datos del cliente, mascota y veterinario desde sus respectivos servicios.
+
+➕ Crear nueva cita
+httpPOST /api/citas
+Content-Type: application/json
+Body:
+json{
+    "cliente_dni": "12345678",
+    "mascota_id": "692fa90a8ebd11706aed581a",
+    "veterinario_id": 2,
+    "fecha": "2024-12-07",
+    "hora": "16:00:00",
+    "motivo": "Revisión post-vacunación y chequeo general",
+    "observaciones": "El dueño reporta que el perro ha estado más activo"
+}
+Campos obligatorios: cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo
+Validaciones automáticas:
+
+✅ Verifica que el cliente existe
+✅ Verifica que la mascota existe
+✅ Verifica que la mascota pertenece al cliente
+✅ Verifica que el veterinario existe y es veterinario
+✅ Verifica disponibilidad del veterinario
+
+
+✏️ Actualizar cita
+httpPUT /api/citas/:id
+Content-Type: application/json
+Body:
+json{
+    "diagnostico": "Mascota en perfecto estado de salud",
+    "tratamiento": "Continuar con alimentación balanceada",
+    "costo": 150.00,
+    "observaciones": "Próximo control en 6 meses"
+}
+
+🔄 Cambiar estado de cita
+httpPATCH /api/citas/:id/estado
+Content-Type: application/json
+Body:
+json{
+    "estado": "confirmada"
+}
+
+🗑️ Cancelar cita
+httpDELETE /api/citas/:id
+Marca la cita como cancelada (soft delete).
+
+📊 Obtener estadísticas
+httpGET /api/citas/estadisticas/resumen
+Respuesta:
+json{
+    "success": true,
+    "data": {
+        "total": 10,
+        "pendientes": 3,
+        "confirmadas": 4,
+        "en_curso": 1,
+        "completadas": 1,
+        "canceladas": 1,
+        "hoy": 2
+    }
+}
+
+🔐 Códigos de Estado HTTP
+CódigoSignificadoCuándo se usa200OKOperación exitosa (GET, PUT, PATCH)201CreatedRecurso creado exitosamente (POST)400Bad RequestDatos inválidos o faltantes404Not FoundRecurso no encontrado409ConflictConflicto (DNI duplicado, horario ocupado)500Internal Server ErrorError del servidor
+
+📝 Estructura de Respuestas
+Respuesta Exitosa
+json{
+    "success": true,
+    "data": {...},
+    "message": "Operación exitosa"
+}
+Respuesta de Error
+json{
+    "success": false,
+    "message": "Descripción del error",
+    "error": "Detalle técnico del error"
+}
+```
+
+---
+
+# 🔐 Sobre tu Pregunta: ¿JWT primero o Frontend primero?
+
+## Mi Recomendación: **SÍ, JWT y Seguridad ANTES del Frontend**
+
+### ¿Por qué?
+
+#### ✅ **Ventajas de hacer JWT primero:**
+
+1. **Evitas rehacer código del frontend**
+   - Si haces frontend primero sin autenticación, luego tendrás que modificar TODAS las llamadas API para incluir tokens
+   - Es más trabajo rehacerlo que hacerlo bien desde el inicio
+
+2. **Defines roles desde el principio**
+   - Sabes qué endpoints son públicos y cuáles privados
+   - Frontend se diseña ya con permisos en mente
+
+3. **Mejores prácticas profesionales**
+   - Ningún sistema profesional debería estar sin autenticación
+   - Es más seguro desde el día 1
+
+4. **Facilita el desarrollo del frontend**
+   - Ya tendrás endpoints de login/register listos
+   - El frontend solo consume APIs ya seguras
+
+5. **Variables de entorno ya configuradas**
+   - JWT_SECRET y otras variables sensibles ya estarán protegidas
+
+---
+
+### 📋 Orden Recomendado:
+```
+1. ✅ Backend con microservicios (YA LO TIENES)
+2. 🔐 Autenticación JWT + Roles
+3. 🔐 Proteger endpoints según roles
+4. 🔐 Variables de entorno seguras
+5. 🖥️ Frontend con login/autenticación
+6. 🖥️ Frontend completo por roles
+7. ☁️ Deploy
+
+
+
