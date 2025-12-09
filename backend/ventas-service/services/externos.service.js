@@ -1,3 +1,6 @@
+//externos.service.js
+const tokenInterno = require("./tokenInterno");
+
 const axios = require('axios');
 
 const PRODUCTOS_SERVICE_URL = process.env.PRODUCTOS_SERVICE_URL || 'http://localhost:3003';
@@ -40,7 +43,8 @@ class ExternosService {
                 },
                 {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        Authorization: `Bearer ${tokenInterno}`
+
                     }
                 }
             );
@@ -65,7 +69,8 @@ class ExternosService {
                 },
                 {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        Authorization: `Bearer ${tokenInterno}`
+
                     }
                 }
             );

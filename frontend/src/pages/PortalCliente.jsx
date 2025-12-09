@@ -1,12 +1,14 @@
-//src/pages/PortalCliente.jsx
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useCarrito } from '../context/CarritoContext';
 import MascotasService from '../services/mascotas.service';
 import CitasService from '../services/citas.service';
 import ProductosService from '../services/productos.service';
 import ClientesService from '../services/clientes.service';
+import OrdenesService from '../services/ordenes.service';
+import CarritoFlotante from '../components/CarritoFlotante';
+import Modal from '../components/Modal';
 import './PortalCliente.css';
 
 function PortalCliente() {
@@ -14,28 +16,46 @@ function PortalCliente() {
     const [mascotas, setMascotas] = useState([]);
     const [citas, setCitas] = useState([]);
     const [productos, setProductos] = useState([]);
+    const [misCompras, setMisCompras] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('mascotas');
+    const [activeTab, setActiveTab] = useState('tienda');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [categoriaFiltro, setCategoriaFiltro] = useState('');
+    
+    // Estados del carrito y checkout
+    const [showCarritoModal, setShowCarritoModal] = useState(false);
+    const [showDetalleCompra, setShowDetalleCompra] = useState(false);
+    const [compraDetalle, setCompraDetalle] = useState(null);
+    const [metodoPago, setMetodoPago] = useState('efectivo');
+    const [observaciones, setObservaciones] = useState('');
+    const [procesandoCompra, setProcesandoCompra] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const { user, logout } = useAuth();
+    const { carrito, agregarAlCarrito, actualizarCantidad, eliminarDelCarrito, vaciarCarrito, calcularTotal, getCantidadTotal } = useCarrito();
     const navigate = useNavigate();
 
     useEffect(() => {
         loadData();
     }, []);
 
+    useEffect(() => {
+        if (activeTab === 'compras') {
+            loadMisCompras();
+        }
+    }, [activeTab]);
+
     const loadData = async () => {
         try {
             setLoading(true);
 
-            // ⭐ CAMBIO: Obtener mi propio perfil
             const clienteResponse = await ClientesService.getMiPerfil();
             const clienteEncontrado = clienteResponse.data;
             
             if (clienteEncontrado) {
                 setCliente(clienteEncontrado);
 
-                // Cargar mascotas del cliente
                 try {
                     const mascotasResponse = await MascotasService.getByClienteDni(clienteEncontrado.dni);
                     setMascotas(mascotasResponse.mascotas || []);
@@ -44,7 +64,6 @@ function PortalCliente() {
                     setMascotas([]);
                 }
 
-                // Cargar citas del cliente
                 try {
                     const citasResponse = await CitasService.getAll({ clienteDni: clienteEncontrado.dni });
                     setCitas(citasResponse.data || []);
@@ -54,7 +73,6 @@ function PortalCliente() {
                 }
             }
 
-            // Cargar productos disponibles
             try {
                 const productosResponse = await ProductosService.getAll();
                 setProductos(productosResponse.data || []);
@@ -70,9 +88,111 @@ function PortalCliente() {
         }
     };
 
+    const loadMisCompras = async () => {
+        try {
+            const response = await OrdenesService.getMisCompras();
+            setMisCompras(response.data || []);
+        } catch (err) {
+            console.error('Error al cargar compras:', err);
+        }
+    };
+
+    const handleAgregarAlCarrito = (producto) => {
+        if (producto.stock <= 0) {
+            setError('Producto sin stock disponible');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
+        agregarAlCarrito(producto, 1);
+        setSuccess(`✅ ${producto.nombre} agregado al carrito`);
+        setTimeout(() => setSuccess(''), 2000);
+    };
+
+    const handleFinalizarCompra = async () => {
+        if (carrito.length === 0) {
+            setError('El carrito está vacío');
+            return;
+        }
+
+        setError('');
+        setProcesandoCompra(true);
+
+        try {
+            const productosCompra = carrito.map(item => ({
+                producto_id: item._id,
+                cantidad: item.cantidadCarrito
+            }));
+
+            await OrdenesService.realizarCompra({
+                productos: productosCompra,
+                metodo_pago: metodoPago,
+                direccion_entrega: cliente?.direccion || '',
+                observaciones: observaciones || null
+            });
+
+            setSuccess('🎉 ¡Compra realizada exitosamente!');
+            vaciarCarrito();
+            setShowCarritoModal(false);
+            setObservaciones('');
+            setMetodoPago('efectivo');
+            
+            // Recargar productos para actualizar stock
+            const productosResponse = await ProductosService.getAll();
+            setProductos(productosResponse.data || []);
+
+            setTimeout(() => {
+                setSuccess('');
+                setActiveTab('compras');
+            }, 2000);
+
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error al procesar la compra');
+        } finally {
+            setProcesandoCompra(false);
+        }
+    };
+
+    const handleVerDetalleCompra = async (compra) => {
+        try {
+            const response = await OrdenesService.getById(compra.id);
+            setCompraDetalle(response.data);
+            setShowDetalleCompra(true);
+        } catch (err) {
+            setError('Error al cargar detalles de la compra');
+        }
+    };
+
+    const handleCancelarCompra = async (compraId) => {
+        if (!window.confirm('¿Estás seguro de cancelar esta compra? Se restaurará el stock.')) {
+            return;
+        }
+
+        try {
+            await OrdenesService.cancelarOrden(compraId);
+            setSuccess('✅ Compra cancelada exitosamente');
+            loadMisCompras();
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error al cancelar compra');
+        }
+    };
+
     const handleLogout = () => {
         logout();
         navigate('/login');
+    };
+
+    const getCategoriaEmoji = (categoria) => {
+        const emojis = {
+            alimento: '🍖',
+            juguete: '🎾',
+            medicina: '💊',
+            accesorio: '🎀',
+            higiene: '🧼',
+            otro: '📦'
+        };
+        return emojis[categoria] || '📦';
     };
 
     const getEstadoBadge = (estado) => {
@@ -81,7 +201,10 @@ function PortalCliente() {
             confirmada: { color: '#2196F3', emoji: '✅', texto: 'Confirmada' },
             en_curso: { color: '#9C27B0', emoji: '🏥', texto: 'En Curso' },
             completada: { color: '#4CAF50', emoji: '✔️', texto: 'Completada' },
-            cancelada: { color: '#F44336', emoji: '❌', texto: 'Cancelada' }
+            cancelada: { color: '#F44336', emoji: '❌', texto: 'Cancelada' },
+            pagado: { color: '#4CAF50', emoji: '💳', texto: 'Pagado' },
+            preparando: { color: '#2196F3', emoji: '📦', texto: 'Preparando' },
+            listo: { color: '#9C27B0', emoji: '✅', texto: 'Listo' }
         };
         const badge = badges[estado] || badges.pendiente;
         return (
@@ -95,9 +218,18 @@ function PortalCliente() {
         return new Date(fecha).toLocaleDateString('es-PE', {
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
         });
     };
+
+    const productosFiltrados = productos.filter(producto => {
+        const matchBusqueda = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             (producto.marca && producto.marca.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchCategoria = !categoriaFiltro || producto.categoria === categoriaFiltro;
+        return matchBusqueda && matchCategoria && producto.stock > 0;
+    });
 
     if (loading) {
         return <div className="loading-portal">Cargando tu información...</div>;
@@ -136,7 +268,22 @@ function PortalCliente() {
                     )}
                 </div>
 
+                {error && <div className="alert alert-error">{error}</div>}
+                {success && <div className="alert alert-success">{success}</div>}
+
                 <div className="portal-tabs">
+                    <button
+                        className={`tab ${activeTab === 'tienda' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('tienda')}
+                    >
+                        🛒 Tienda ({productos.length})
+                    </button>
+                    <button
+                        className={`tab ${activeTab === 'compras' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('compras')}
+                    >
+                        📦 Mis Compras ({misCompras.length})
+                    </button>
                     <button
                         className={`tab ${activeTab === 'mascotas' ? 'active' : ''}`}
                         onClick={() => setActiveTab('mascotas')}
@@ -149,15 +296,125 @@ function PortalCliente() {
                     >
                         📅 Mis Citas ({citas.length})
                     </button>
-                    <button
-                        className={`tab ${activeTab === 'productos' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('productos')}
-                    >
-                        🛒 Productos ({productos.length})
-                    </button>
                 </div>
 
                 <div className="portal-tab-content">
+                    {/* Tab de Tienda */}
+                    {activeTab === 'tienda' && (
+                        <div className="tienda-container">
+                            <div className="tienda-filtros">
+                                <input
+                                    type="text"
+                                    placeholder="🔍 Buscar productos..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input-tienda"
+                                />
+                                <select
+                                    value={categoriaFiltro}
+                                    onChange={(e) => setCategoriaFiltro(e.target.value)}
+                                    className="categoria-select"
+                                >
+                                    <option value="">Todas las categorías</option>
+                                    <option value="alimento">🍖 Alimento</option>
+                                    <option value="juguete">🎾 Juguete</option>
+                                    <option value="medicina">💊 Medicina</option>
+                                    <option value="accesorio">🎀 Accesorio</option>
+                                    <option value="higiene">🧼 Higiene</option>
+                                    <option value="otro">📦 Otro</option>
+                                </select>
+                            </div>
+
+                            <div className="productos-grid-tienda">
+                                {productosFiltrados.length === 0 ? (
+                                    <div className="empty-state">
+                                        <p>No se encontraron productos disponibles</p>
+                                    </div>
+                                ) : (
+                                    productosFiltrados.map(producto => (
+                                        <div key={producto._id} className="producto-card-tienda">
+                                            <div className="producto-emoji-tienda">
+                                                {getCategoriaEmoji(producto.categoria)}
+                                            </div>
+                                            <h3>{producto.nombre}</h3>
+                                            <p className="producto-categoria-tienda">{producto.categoria}</p>
+                                            {producto.descripcion && (
+                                                <p className="producto-descripcion">{producto.descripcion}</p>
+                                            )}
+                                            <div className="producto-footer-tienda">
+                                                <span className="producto-precio-tienda">
+                                                    S/ {producto.precio.toFixed(2)}
+                                                </span>
+                                                <span className="producto-stock-tienda">
+                                                    Stock: {producto.stock}
+                                                </span>
+                                            </div>
+                                            <button
+                                                className="btn-agregar-carrito"
+                                                onClick={() => handleAgregarAlCarrito(producto)}
+                                                disabled={producto.stock === 0}
+                                            >
+                                                🛒 Agregar
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tab de Mis Compras */}
+                    {activeTab === 'compras' && (
+                        <div className="compras-list">
+                            {misCompras.length === 0 ? (
+                                <div className="empty-state">
+                                    <p>📦 Aún no has realizado compras</p>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={() => setActiveTab('tienda')}
+                                    >
+                                        Ir a la Tienda
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="compras-grid">
+                                    {misCompras.map(compra => (
+                                        <div key={compra.id} className="compra-card">
+                                            <div className="compra-header">
+                                                <span className="compra-id">Orden #{compra.id}</span>
+                                                {getEstadoBadge(compra.estado)}
+                                            </div>
+                                            <div className="compra-info">
+                                                <p><strong>Fecha:</strong> {formatFecha(compra.fecha_orden)}</p>
+                                                <p><strong>Total:</strong> S/ {parseFloat(compra.total).toFixed(2)}</p>
+                                                <p><strong>Método de pago:</strong> {compra.metodo_pago}</p>
+                                                {compra.productos && (
+                                                    <p><strong>Productos:</strong> {compra.productos.length} items</p>
+                                                )}
+                                            </div>
+                                            <div className="compra-actions">
+                                                <button
+                                                    className="btn-ver-detalle"
+                                                    onClick={() => handleVerDetalleCompra(compra)}
+                                                >
+                                                    Ver Detalle
+                                                </button>
+                                                {compra.estado === 'pendiente' && (
+                                                    <button
+                                                        className="btn-cancelar-compra"
+                                                        onClick={() => handleCancelarCompra(compra.id)}
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
                     {/* Tab de Mascotas */}
                     {activeTab === 'mascotas' && (
                         <div className="mascotas-list">
@@ -218,34 +475,174 @@ function PortalCliente() {
                             )}
                         </div>
                     )}
+                </div>
+            </div>
 
-                    {/* Tab de Productos */}
-                    {activeTab === 'productos' && (
-                        <div className="productos-list">
-                            <p className="productos-info">
-                                🛒 Productos disponibles en nuestra veterinaria
-                            </p>
-                            <div className="cards-grid">
-                                {productos.map(producto => (
-                                    <div key={producto._id} className="producto-card-portal">
-                                        <h3>{producto.nombre}</h3>
-                                        <span className="producto-categoria">{producto.categoria}</span>
-                                        <p className="producto-precio">S/ {producto.precio.toFixed(2)}</p>
-                                        {producto.descripcion && (
-                                            <p className="producto-desc">{producto.descripcion}</p>
-                                        )}
-                                        {producto.stock > 0 ? (
-                                            <span className="stock-badge disponible">✅ Disponible</span>
-                                        ) : (
-                                            <span className="stock-badge agotado">❌ Agotado</span>
-                                        )}
+            {/* Carrito Flotante */}
+            <CarritoFlotante onAbrir={() => setShowCarritoModal(true)} />
+
+            {/* Modal del Carrito */}
+            <Modal
+                isOpen={showCarritoModal}
+                onClose={() => setShowCarritoModal(false)}
+                title={`🛒 Mi Carrito (${getCantidadTotal()} productos)`}
+            >
+                <div className="carrito-modal-content">
+                    {carrito.length === 0 ? (
+                        <div className="carrito-vacio">
+                            <p>Tu carrito está vacío</p>
+                            <button
+                                className="btn-primary"
+                                onClick={() => {
+                                    setShowCarritoModal(false);
+                                    setActiveTab('tienda');
+                                }}
+                            >
+                                Ir a la Tienda
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="carrito-productos">
+                                {carrito.map(producto => (
+                                    <div key={producto._id} className="carrito-item">
+                                        <div className="carrito-item-info">
+                                            <span className="carrito-emoji">
+                                                {getCategoriaEmoji(producto.categoria)}
+                                            </span>
+                                            <div>
+                                                <h4>{producto.nombre}</h4>
+                                                <p>S/ {producto.precio.toFixed(2)} c/u</p>
+                                            </div>
+                                        </div>
+                                        <div className="carrito-item-cantidad">
+                                            <button
+                                                onClick={() => actualizarCantidad(producto._id, producto.cantidadCarrito - 1)}
+                                            >
+                                                -
+                                            </button>
+                                            <span>{producto.cantidadCarrito}</span>
+                                            <button
+                                                onClick={() => actualizarCantidad(producto._id, producto.cantidadCarrito + 1)}
+                                                disabled={producto.cantidadCarrito >= producto.stock}
+                                            >
+                                                +
+                                            </button>
+                                        </div>
+                                        <div className="carrito-item-subtotal">
+                                            <p>S/ {(producto.precio * producto.cantidadCarrito).toFixed(2)}</p>
+                                            <button
+                                                className="btn-eliminar-item"
+                                                onClick={() => eliminarDelCarrito(producto._id)}
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
+
+                            <div className="carrito-checkout">
+                                <div className="metodos-pago-carrito">
+                                    <label>Método de Pago:</label>
+                                    <div className="metodos-grid">
+                                        {['efectivo', 'tarjeta', 'yape', 'plin'].map(metodo => (
+                                            <button
+                                                key={metodo}
+                                                className={`metodo-btn-small ${metodoPago === metodo ? 'active' : ''}`}
+                                                onClick={() => setMetodoPago(metodo)}
+                                            >
+                                                {metodo === 'efectivo' && '💵'}
+                                                {metodo === 'tarjeta' && '💳'}
+                                                {metodo === 'yape' && '📱'}
+                                                {metodo === 'plin' && '📲'}
+                                                {' '}{metodo.charAt(0).toUpperCase() + metodo.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="observaciones-carrito">
+                                    <label htmlFor="obs">Observaciones (opcional):</label>
+                                    <textarea
+                                        id="obs"
+                                        value={observaciones}
+                                        onChange={(e) => setObservaciones(e.target.value)}
+                                        rows="2"
+                                        placeholder="Alguna indicación especial..."
+                                    />
+                                </div>
+
+                                <div className="carrito-total-final">
+                                    <span>Total:</span>
+                                    <span>S/ {calcularTotal().toFixed(2)}</span>
+                                </div>
+
+                                <div className="carrito-acciones">
+                                    <button
+                                        className="btn-vaciar"
+                                        onClick={vaciarCarrito}
+                                    >
+                                        Vaciar Carrito
+                                    </button>
+                                    <button
+                                        className="btn-finalizar"
+                                        onClick={handleFinalizarCompra}
+                                        disabled={procesandoCompra}
+                                    >
+                                        {procesandoCompra ? 'Procesando...' : '✅ Finalizar Compra'}
+                                    </button>
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
-            </div>
+            </Modal>
+
+            {/* Modal de Detalle de Compra */}
+            <Modal
+                isOpen={showDetalleCompra}
+                onClose={() => setShowDetalleCompra(false)}
+                title={`Detalle de Orden #${compraDetalle?.id}`}
+            >
+                {compraDetalle && (
+                    <div className="detalle-compra">
+                        <div className="detalle-section">
+                            <h3>📋 Información General</h3>
+                            <p><strong>Fecha:</strong> {formatFecha(compraDetalle.fecha_orden)}</p>
+                            <p><strong>Estado:</strong> {getEstadoBadge(compraDetalle.estado)}</p>
+                            <p><strong>Total:</strong> S/ {parseFloat(compraDetalle.total).toFixed(2)}</p>
+                            <p><strong>Método de pago:</strong> {compraDetalle.metodo_pago}</p>
+                        </div>
+
+                        <div className="detalle-section">
+                            <h3>📦 Productos</h3>
+                            {compraDetalle.productos && compraDetalle.productos.map((producto, index) => (
+                                <div key={index} className="producto-detalle-item">
+                                    <p>
+                                        <strong>{producto.producto_nombre}</strong> x{producto.cantidad}
+                                    </p>
+                                    <p>S/ {parseFloat(producto.subtotal).toFixed(2)}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {compraDetalle.direccion_entrega && (
+                            <div className="detalle-section">
+                                <h3>📍 Dirección de Entrega</h3>
+                                <p>{compraDetalle.direccion_entrega}</p>
+                            </div>
+                        )}
+
+                        {compraDetalle.observaciones && (
+                            <div className="detalle-section">
+                                <h3>📝 Observaciones</h3>
+                                <p>{compraDetalle.observaciones}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Modal>
         </div>
     );
 }
