@@ -6,15 +6,20 @@ class TrabajadoresService {
         return response.data;
     }
 
+    async getVeterinarios() {
+        const response = await trabajadoresApi.get('/trabajadores', {
+            params: { cargo: 'veterinario' }
+        });
+        return response.data;
+    }
+
     async getByDni(dni) {
         const response = await trabajadoresApi.get(`/trabajadores/dni/${dni}`);
         return response.data;
     }
 
-    async getById(id, incluirHorarios = false) {
-        const response = await trabajadoresApi.get(`/trabajadores/${id}`, {
-            params: { incluirHorarios }
-        });
+    async getById(id) {
+        const response = await trabajadoresApi.get(`/trabajadores/${id}`);
         return response.data;
     }
 

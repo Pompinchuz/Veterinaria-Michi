@@ -47,3 +47,4 @@ export const mascotasApi = createApiClient(import.meta.env.VITE_API_MASCOTAS_URL
 export const productosApi = createApiClient(import.meta.env.VITE_API_PRODUCTOS_URL);
 export const trabajadoresApi = createApiClient(import.meta.env.VITE_API_TRABAJADORES_URL);
 export const citasApi = createApiClient(import.meta.env.VITE_API_CITAS_URL);
+export const ventasApi = createApiClient(import.meta.env.VITE_API_VENTAS_URL); // ⭐ AGREGAR

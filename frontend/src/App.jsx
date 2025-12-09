@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { CarritoProvider } from './context/CarritoContext'; // ⭐ IMPORTAR
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,86 +11,98 @@ import Mascotas from './pages/Mascotas';
 import Productos from './pages/Productos';
 import Citas from './pages/Citas';
 import Trabajadores from './pages/Trabajadores';
+import Ventas from './pages/Ventas';
 
 function App() {
     return (
         <AuthProvider>
-            <Router>
-                <Routes>
-                    {/* Rutas públicas */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    
-                    {/* Portal del Cliente */}
-                    <Route 
-                        path="/portal-cliente" 
-                        element={
-                            <ProtectedRoute allowedRoles={['cliente']}>
-                                <PortalCliente />
-                            </ProtectedRoute>
-                        } 
-                    />
+            <CarritoProvider> {/* ⭐ AGREGAR */}
+                <Router>
+                    <Routes>
+                        {/* Rutas públicas */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        
+                        {/* Portal del Cliente */}
+                        <Route 
+                            path="/portal-cliente" 
+                            element={
+                                <ProtectedRoute allowedRoles={['cliente']}>
+                                    <PortalCliente />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    {/* Dashboard del Personal */}
-                    <Route 
-                        path="/dashboard" 
-                        element={
-                            <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
-                                <Dashboard />
-                            </ProtectedRoute>
-                        } 
-                    />
+                        {/* Dashboard del Personal */}
+                        <Route 
+                            path="/dashboard" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Dashboard />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    <Route 
-                        path="/clientes" 
-                        element={
-                            <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
-                                <Clientes />
-                            </ProtectedRoute>
-                        } 
-                    />
+                        <Route 
+                            path="/clientes" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Clientes />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    <Route 
-                        path="/mascotas" 
-                        element={
-                            <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
-                                <Mascotas />
-                            </ProtectedRoute>
-                        } 
-                    />
+                        <Route 
+                            path="/mascotas" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Mascotas />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    <Route 
-                        path="/productos" 
-                        element={
-                            <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
-                                <Productos />
-                            </ProtectedRoute>
-                        } 
-                    />
+                        <Route 
+                            path="/productos" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Productos />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    <Route 
-                        path="/citas" 
-                        element={
-                            <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
-                                <Citas />
-                            </ProtectedRoute>
-                        } 
-                    />
+                        <Route 
+                            path="/citas" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Citas />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    <Route 
-                        path="/trabajadores" 
-                        element={
-                            <ProtectedRoute allowedRoles={['admin']}>
-                                <Trabajadores />
-                            </ProtectedRoute>
-                        } 
-                    />
+                        <Route 
+                            path="/trabajadores" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin']}>
+                                    <Trabajadores />
+                                </ProtectedRoute>
+                            } 
+                        />
 
-                    {/* Redirección por defecto */}
-                    <Route path="/" element={<Navigate to="/login" replace />} />
-                    <Route path="*" element={<Navigate to="/login" replace />} />
-                </Routes>
-            </Router>
+                        <Route 
+                            path="/ventas" 
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Ventas />
+                                </ProtectedRoute>
+                            } 
+                        />
+
+                        {/* Redirección por defecto */}
+                        <Route path="/" element={<Navigate to="/login" replace />} />
+                        <Route path="*" element={<Navigate to="/login" replace />} />
+                    </Routes>
+                </Router>
+            </CarritoProvider> {/* ⭐ CERRAR */}
         </AuthProvider>
     );
 }

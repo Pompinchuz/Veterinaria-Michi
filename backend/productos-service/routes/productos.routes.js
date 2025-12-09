@@ -1,3 +1,4 @@
+//productos-service/routes/productos.routes.js
 const express = require('express');
 const router = express.Router();
 const ProductosController = require('../controllers/productos.controller');
