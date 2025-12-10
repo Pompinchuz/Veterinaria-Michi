@@ -6,14 +6,14 @@ const AuthMiddleware = require('../middleware/auth.middleware');
 // Aplicar autenticación a todas las rutas
 router.use(AuthMiddleware.verificarToken);
 
-// Rutas de estadísticas (deben ir antes de :id)
+// Rutas de estadísticas (deben ir antes de :id) - Solo admin y recepcionista
 router.get('/estadisticas/generales',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.obtenerEstadisticas
 );
 
 router.get('/estadisticas/combinadas',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.obtenerEstadisticasCombinadas
 );
 
@@ -23,12 +23,12 @@ router.get('/dia',
 );
 
 router.get('/top-productos',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.topProductos
 );
 
 router.get('/top-productos-combinado',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.topProductosCombinado
 );
 
@@ -37,24 +37,24 @@ router.get('/producto/:id/stats',
     VentasController.estadisticasProducto
 );
 
-// Rutas de gráficos
+// Rutas de gráficos - Solo admin y recepcionista
 router.get('/graficos/por-dia',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.ventasPorDiaGrafico
 );
 
 router.get('/graficos/por-metodo',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.ventasPorMetodoGrafico
 );
 
 router.get('/graficos/por-categoria',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.ventasPorCategoriaGrafico
 );
 
 router.get('/graficos/por-hora',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esAdminORecepcionista,
     VentasController.ventasPorHoraGrafico
 );
 

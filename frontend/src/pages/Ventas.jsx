@@ -152,6 +152,7 @@ function Ventas() {
     };
 
     const isAdmin = user?.rol === 'admin';
+    const canViewStats = user?.rol === 'admin' || user?.rol === 'recepcionista';
 
     return (
         <div className="page-container">
@@ -163,9 +164,11 @@ function Ventas() {
                     <button onClick={() => navigate('/dashboard')} className="btn-back">
                         ← Volver
                     </button>
-                    <button onClick={() => navigate('/ventas/estadisticas')} className="btn-stats">
-                        📊 Estadísticas
-                    </button>
+                    {canViewStats && (
+                        <button onClick={() => navigate('/ventas/estadisticas')} className="btn-stats">
+                            📊 Estadísticas
+                        </button>
+                    )}
                     <span className="user-name">{user?.nombre} {user?.apellido}</span>
                     <span className="user-role">{user?.rol}</span>
                     <button onClick={handleLogout} className="btn-logout">

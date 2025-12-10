@@ -66,6 +66,10 @@ class AuthMiddleware {
     static esPersonal(req, res, next) {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista'])(req, res, next);
     }
+
+    static esAdminORecepcionista(req, res, next) {
+        return AuthMiddleware.verificarRol(['admin', 'recepcionista'])(req, res, next);
+    }
 }
 
 module.exports = AuthMiddleware;

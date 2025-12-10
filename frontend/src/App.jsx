@@ -101,7 +101,7 @@ function App() {
                         <Route
                             path="/ventas/estadisticas"
                             element={
-                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                <ProtectedRoute allowedRoles={['admin', 'recepcionista']}>
                                     <Estadisticas />
                                 </ProtectedRoute>
                             }
