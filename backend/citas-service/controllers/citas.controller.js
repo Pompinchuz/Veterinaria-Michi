@@ -87,6 +87,7 @@ class CitasController {
             const { id } = req.params;
             const { incluirDetalles } = req.query;
             const token = req.headers.authorization?.split(' ')[1];
+            const usuario = req.usuario;
 
             const cita = await CitaModel.obtenerPorId(id);
 
@@ -95,6 +96,17 @@ class CitasController {
                     success: false,
                     message: `No se encontró cita con ID: ${id}`
                 });
+            }
+
+            // Si es cliente, verificar que la cita le pertenece
+            if (usuario.rol === 'cliente') {
+                const dniUsuario = usuario.email || usuario.dni;
+                if (cita.cliente_dni !== dniUsuario) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permisos para ver esta cita'
+                    });
+                }
             }
 
             // Si se solicitan detalles, obtener información de otros servicios
@@ -134,6 +146,7 @@ class CitasController {
         try {
             let { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
             const token = req.headers.authorization?.split(' ')[1];
+            const usuario = req.usuario;
 
             console.log('➕ Creando cita - Usuario:', req.usuario.email, 'Rol:', req.usuario.rol);
             console.log('📦 Datos recibidos:', { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo });
