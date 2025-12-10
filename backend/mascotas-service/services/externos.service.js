@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const CLIENTES_SERVICE_URL = process.env.CLIENTES_SERVICE_URL;
-
+const tokenInterno = require("./TokenInterno");
 class ExternosService {
 
     // Verificar que el cliente existe
@@ -13,7 +13,7 @@ class ExternosService {
             
             const respuesta = await axios.get(`${CLIENTES_SERVICE_URL}/api/clientes/dni/${dni}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${tokenInterno}`
                 }
             });
             return respuesta.data.data;
