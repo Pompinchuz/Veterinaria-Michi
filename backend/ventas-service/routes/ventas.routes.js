@@ -32,6 +32,27 @@ router.get('/producto/:id/stats',
     VentasController.estadisticasProducto
 );
 
+// Rutas de gráficos
+router.get('/graficos/por-dia',
+    AuthMiddleware.esPersonal,
+    VentasController.ventasPorDiaGrafico
+);
+
+router.get('/graficos/por-metodo',
+    AuthMiddleware.esPersonal,
+    VentasController.ventasPorMetodoGrafico
+);
+
+router.get('/graficos/por-categoria',
+    AuthMiddleware.esPersonal,
+    VentasController.ventasPorCategoriaGrafico
+);
+
+router.get('/graficos/por-hora',
+    AuthMiddleware.esPersonal,
+    VentasController.ventasPorHoraGrafico
+);
+
 // Rutas principales
 router.get('/',
     AuthMiddleware.esPersonal,

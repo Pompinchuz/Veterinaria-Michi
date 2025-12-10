@@ -12,6 +12,7 @@ import Productos from './pages/Productos';
 import Citas from './pages/Citas';
 import Trabajadores from './pages/Trabajadores';
 import Ventas from './pages/Ventas';
+import Estadisticas from './pages/Estadisticas';
 
 function App() {
     return (
@@ -88,13 +89,22 @@ function App() {
                             } 
                         />
 
-                        <Route 
-                            path="/ventas" 
+                        <Route
+                            path="/ventas"
                             element={
                                 <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
                                     <Ventas />
                                 </ProtectedRoute>
-                            } 
+                            }
+                        />
+
+                        <Route
+                            path="/ventas/estadisticas"
+                            element={
+                                <ProtectedRoute allowedRoles={['admin', 'veterinario', 'enfermera', 'recepcionista']}>
+                                    <Estadisticas />
+                                </ProtectedRoute>
+                            }
                         />
 
                         {/* Redirección por defecto */}

@@ -60,6 +60,38 @@ class VentasService {
         const response = await ventasApi.delete(`/ventas/${id}`); // ⭐ AGREGAR /ventas
         return response.data;
     }
+
+    // Obtener ventas por día (para gráficos)
+    async getVentasPorDia(dias = 30) {
+        const response = await ventasApi.get('/ventas/graficos/por-dia', {
+            params: { dias }
+        });
+        return response.data;
+    }
+
+    // Obtener ventas por método de pago
+    async getVentasPorMetodo(dias = 30) {
+        const response = await ventasApi.get('/ventas/graficos/por-metodo', {
+            params: { dias }
+        });
+        return response.data;
+    }
+
+    // Obtener ventas por categoría
+    async getVentasPorCategoria(dias = 30) {
+        const response = await ventasApi.get('/ventas/graficos/por-categoria', {
+            params: { dias }
+        });
+        return response.data;
+    }
+
+    // Obtener ventas por hora
+    async getVentasPorHora(dias = 7) {
+        const response = await ventasApi.get('/ventas/graficos/por-hora', {
+            params: { dias }
+        });
+        return response.data;
+    }
 }
 
 export default new VentasService();
