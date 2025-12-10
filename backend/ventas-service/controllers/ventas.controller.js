@@ -172,7 +172,7 @@ class VentasController {
         }
     }
 
-    // GET /api/ventas/estadisticas/generales - Estadísticas generales
+    // GET /api/ventas/estadisticas/generales - Estadísticas generales (solo ventas directas)
     static async obtenerEstadisticas(req, res) {
         try {
             const { periodo } = req.query; // dia, semana, mes, año
@@ -198,6 +198,138 @@ class VentasController {
                 error: error.message
             });
         }
+    }
+
+    // GET /api/ventas/estadisticas/combinadas - Estadísticas combinadas (ventas + órdenes)
+    static async obtenerEstadisticasCombinadas(req, res) {
+        try {
+            const { periodo } = req.query; // dia, semana, mes, año
+
+            // Obtener estadísticas de ventas directas y órdenes en paralelo
+            const [estadisticasVentas, estadisticasOrdenes] = await Promise.all([
+                VentaModel.obtenerEstadisticas(periodo || 'mes'),
+                OrdenModel.obtenerEstadisticas(periodo || 'mes')
+            ]);
+
+            // Combinar las estadísticas
+            const estadisticasCombinadas = {
+                total_ventas: (parseInt(estadisticasVentas.total_ventas) || 0) +
+                              (parseInt(estadisticasOrdenes.total_ordenes) || 0),
+                total_productos_vendidos: (parseInt(estadisticasVentas.total_productos_vendidos) || 0) +
+                                         (parseInt(estadisticasOrdenes.total_productos_vendidos) || 0),
+                ingresos_totales: (parseFloat(estadisticasVentas.ingresos_totales) || 0) +
+                                 (parseFloat(estadisticasOrdenes.ingresos_totales) || 0),
+                ticket_promedio: 0
+            };
+
+            // Calcular ticket promedio combinado
+            if (estadisticasCombinadas.total_ventas > 0) {
+                estadisticasCombinadas.ticket_promedio =
+                    estadisticasCombinadas.ingresos_totales / estadisticasCombinadas.total_ventas;
+            }
+
+            // Obtener top productos combinados y métodos de pago
+            const topProductos = await VentasController._getTopProductosCombinado(5);
+            const metodosPago = await VentasController._getMetodosPagoCombinados();
+
+            res.json({
+                success: true,
+                data: {
+                    resumen: estadisticasCombinadas,
+                    topProductos: topProductos,
+                    metodosPago: metodosPago
+                },
+                nota: 'Incluye ventas directas y compras de clientes'
+            });
+
+        } catch (error) {
+            console.error('Error al obtener estadísticas combinadas:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener estadísticas combinadas',
+                error: error.message
+            });
+        }
+    }
+
+    // Método auxiliar para obtener top productos combinados
+    static async _getTopProductosCombinado(limite) {
+        const topVentas = await VentaModel.topProductos(100);
+        const topOrdenes = await OrdenModel.topProductos(100);
+
+        const productosCombinados = {};
+
+        for (const producto of topVentas) {
+            const id = producto.producto_id;
+            productosCombinados[id] = {
+                producto_id: id,
+                producto_nombre: producto.producto_nombre,
+                producto_categoria: producto.producto_categoria,
+                total_vendido: parseFloat(producto.total_vendido) || 0,
+                veces_vendido: parseInt(producto.veces_vendido) || 0,
+                ingresos_generados: parseFloat(producto.ingresos_generados) || 0,
+                precio_promedio: parseFloat(producto.precio_promedio) || 0
+            };
+        }
+
+        for (const producto of topOrdenes) {
+            const id = producto.producto_id;
+            if (productosCombinados[id]) {
+                productosCombinados[id].total_vendido += parseFloat(producto.total_vendido) || 0;
+                productosCombinados[id].veces_vendido += parseInt(producto.veces_vendido) || 0;
+                productosCombinados[id].ingresos_generados += parseFloat(producto.ingresos_generados) || 0;
+            } else {
+                productosCombinados[id] = {
+                    producto_id: id,
+                    producto_nombre: producto.producto_nombre,
+                    producto_categoria: producto.producto_categoria,
+                    total_vendido: parseFloat(producto.total_vendido) || 0,
+                    veces_vendido: parseInt(producto.veces_vendido) || 0,
+                    ingresos_generados: parseFloat(producto.ingresos_generados) || 0,
+                    precio_promedio: parseFloat(producto.precio_promedio) || 0
+                };
+            }
+        }
+
+        return Object.values(productosCombinados)
+            .sort((a, b) => b.total_vendido - a.total_vendido)
+            .slice(0, limite);
+    }
+
+    // Método auxiliar para obtener métodos de pago combinados
+    static async _getMetodosPagoCombinados() {
+        const [ventasMetodos, ordenesMetodos] = await Promise.all([
+            VentaModel.ventasPorMetodoPago(),
+            OrdenModel.ordenesPorMetodoPagoPeriodo(365) // Todo el año
+        ]);
+
+        const metodosCombinados = {};
+
+        for (const venta of ventasMetodos) {
+            const metodo = venta.metodo_pago;
+            metodosCombinados[metodo] = {
+                metodo_pago: metodo,
+                total_ventas: parseInt(venta.total_ventas) || 0,
+                total_ingresos: parseFloat(venta.total_ingresos) || 0
+            };
+        }
+
+        for (const orden of ordenesMetodos) {
+            const metodo = orden.metodo_pago;
+            if (metodosCombinados[metodo]) {
+                metodosCombinados[metodo].total_ventas += parseInt(orden.total_ventas) || 0;
+                metodosCombinados[metodo].total_ingresos += parseFloat(orden.total_ingresos) || 0;
+            } else {
+                metodosCombinados[metodo] = {
+                    metodo_pago: metodo,
+                    total_ventas: parseInt(orden.total_ventas) || 0,
+                    total_ingresos: parseFloat(orden.total_ingresos) || 0
+                };
+            }
+        }
+
+        return Object.values(metodosCombinados)
+            .sort((a, b) => b.total_ingresos - a.total_ingresos);
     }
 
     // GET /api/ventas/producto/:id/stats - Estadísticas de un producto

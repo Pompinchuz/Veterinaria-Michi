@@ -7,9 +7,14 @@ const AuthMiddleware = require('../middleware/auth.middleware');
 router.use(AuthMiddleware.verificarToken);
 
 // Rutas de estadísticas (deben ir antes de :id)
-router.get('/estadisticas/generales', 
+router.get('/estadisticas/generales',
     AuthMiddleware.esPersonal,
     VentasController.obtenerEstadisticas
+);
+
+router.get('/estadisticas/combinadas',
+    AuthMiddleware.esPersonal,
+    VentasController.obtenerEstadisticasCombinadas
 );
 
 router.get('/dia',

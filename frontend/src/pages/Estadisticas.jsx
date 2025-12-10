@@ -44,7 +44,7 @@ function Estadisticas() {
                 VentasService.getVentasPorMetodo(periodo),
                 VentasService.getVentasPorCategoria(periodo),
                 VentasService.getVentasPorHora(7),
-                VentasService.getEstadisticas(periodo >= 30 ? 'mes' : 'semana'),
+                VentasService.getEstadisticasCombinadas(periodo >= 30 ? 'mes' : 'semana'),
                 VentasService.getTopProductosCombinado(5)
             ]);
 
