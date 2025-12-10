@@ -16,6 +16,12 @@ class ClientesService {
         return response.data;
     }
 
+    // ⭐ NUEVO: Obtener mi propio perfil
+    async getMiPerfil() {
+        const response = await clientesApi.get('/clientes/mi-perfil');
+        return response.data;
+    }
+
     async create(clienteData) {
         const response = await clientesApi.post('/clientes', clienteData);
         return response.data;
