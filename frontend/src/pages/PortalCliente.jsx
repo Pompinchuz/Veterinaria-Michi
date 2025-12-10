@@ -125,25 +125,38 @@ function PortalCliente() {
                 cantidad: item.cantidadCarrito
             }));
 
-            await OrdenesService.realizarCompra({
+            const response = await OrdenesService.realizarCompra({
                 productos: productosCompra,
                 metodo_pago: metodoPago,
                 direccion_entrega: cliente?.direccion || '',
                 observaciones: observaciones || null
             });
 
-            setSuccess('🎉 ¡Compra realizada exitosamente!');
+            console.log('📦 Respuesta de compra:', response);
+            console.log('📄 Factura recibida:', response.factura);
+
+            // Limpiar el carrito y cerrar modal
             vaciarCarrito();
             setShowCarritoModal(false);
             setObservaciones('');
             setMetodoPago('efectivo');
-            
+
+            // Si la respuesta incluye una factura, mostrar el modal de factura
+            if (response.factura) {
+                console.log('✅ Mostrando modal de factura');
+                setFacturaActual(response.factura);
+                setShowFacturaModal(true);
+            } else {
+                console.log('⚠️ No se recibió factura en la respuesta');
+                setSuccess('🎉 ¡Compra realizada exitosamente!');
+                setTimeout(() => setSuccess(''), 2000);
+            }
+
             // Recargar productos para actualizar stock
             const productosResponse = await ProductosService.getAll();
             setProductos(productosResponse.data || []);
 
             setTimeout(() => {
-                setSuccess('');
                 setActiveTab('compras');
             }, 2000);
 
