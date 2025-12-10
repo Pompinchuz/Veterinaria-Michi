@@ -20,7 +20,8 @@ function Dashboard() {
             if (user?.rol === 'admin') {
                 try {
                     setLoading(true);
-                    const response = await ventasService.getTopProductos(1);
+                    // Usar endpoint combinado que incluye ventas directas y compras de clientes
+                    const response = await ventasService.getTopProductosCombinado(1);
                     if (response.data && response.data.length > 0) {
                         setTopProducto(response.data[0]);
                     }

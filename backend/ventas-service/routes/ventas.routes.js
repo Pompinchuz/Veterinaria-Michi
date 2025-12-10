@@ -22,6 +22,11 @@ router.get('/top-productos',
     VentasController.topProductos
 );
 
+router.get('/top-productos-combinado',
+    AuthMiddleware.esPersonal,
+    VentasController.topProductosCombinado
+);
+
 router.get('/producto/:id/stats',
     AuthMiddleware.esPersonal,
     VentasController.estadisticasProducto

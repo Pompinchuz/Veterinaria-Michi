@@ -41,6 +41,14 @@ class VentasService {
         return response.data;
     }
 
+    // Obtener top productos combinando ventas directas y compras de clientes
+    async getTopProductosCombinado(limite = 10) {
+        const response = await ventasApi.get('/ventas/top-productos-combinado', {
+            params: { limite }
+        });
+        return response.data;
+    }
+
     // Obtener estadísticas de un producto
     async getEstadisticasProducto(productoId) {
         const response = await ventasApi.get(`/ventas/producto/${productoId}/stats`); // ⭐ AGREGAR /ventas
