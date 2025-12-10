@@ -17,8 +17,9 @@ router.get('/',
     MascotasController.obtenerTodasMascotas
 );
 
-router.get('/:id', 
-    AuthMiddleware.esPersonal,
+// Personal y clientes pueden ver detalles de mascotas (se validará en controlador)
+router.get('/:id',
+    AuthMiddleware.esPersonalOCliente,
     MascotasController.obtenerMascotaPorId
 );
 

@@ -15,12 +15,13 @@ router.get('/',
     ClientesController.getAllClientes
 );
 
-router.get('/dni/:dni', 
-    AuthMiddleware.esPersonal,
+// Personal puede buscar cualquier cliente, clientes solo sus propios datos
+router.get('/dni/:dni',
+    AuthMiddleware.verificarAccesoDatosCliente,
     ClientesController.getClienteByDni
 );
 
-router.get('/:id', 
+router.get('/:id',
     AuthMiddleware.esPersonal,
     ClientesController.getClienteById
 );
@@ -30,12 +31,13 @@ router.post('/',
     ClientesController.createCliente
 );
 
-router.put('/:id', 
+// Solo personal puede actualizar clientes (o se podría permitir que clientes actualicen sus datos)
+router.put('/:id',
     AuthMiddleware.esPersonal,
     ClientesController.updateCliente
 );
 
-router.delete('/:id', 
+router.delete('/:id',
     AuthMiddleware.esAdmin,
     ClientesController.deleteCliente
 );

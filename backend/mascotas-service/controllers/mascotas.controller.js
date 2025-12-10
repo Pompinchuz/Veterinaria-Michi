@@ -50,6 +50,14 @@ static async obtenerTodasMascotas(req, res) {
                 });
             }
 
+            // Si es cliente, verificar que la mascota le pertenece
+            if (req.usuario.rol === 'cliente' && mascota.clienteDni !== req.usuario.dni) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permisos para acceder a esta mascota'
+                });
+            }
+
             res.json({
                 success: true,
                 data: mascota
@@ -72,6 +80,14 @@ static async obtenerTodasMascotas(req, res) {
 
             console.log('🔍 Buscando mascotas del cliente:', dni);
             console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
+
+            // Si es cliente, solo puede ver sus propias mascotas
+            if (req.usuario.rol === 'cliente' && dni !== req.usuario.dni) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Solo puedes ver tus propias mascotas'
+                });
+            }
 
             // Verificar que el cliente existe
             const cliente = await ExternosService.verificarCliente(dni, token);
