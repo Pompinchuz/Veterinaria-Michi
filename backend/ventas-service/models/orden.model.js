@@ -156,30 +156,32 @@ class OrdenModel {
 
         switch (periodo) {
             case 'dia':
-                condicionFecha = 'DATE(fecha_orden) = CURDATE()';
+                condicionFecha = 'DATE(o.fecha_orden) = CURDATE()';
                 break;
             case 'semana':
-                condicionFecha = 'YEARWEEK(fecha_orden) = YEARWEEK(NOW())';
+                condicionFecha = 'YEARWEEK(o.fecha_orden) = YEARWEEK(NOW())';
                 break;
             case 'mes':
-                condicionFecha = 'YEAR(fecha_orden) = YEAR(NOW()) AND MONTH(fecha_orden) = MONTH(NOW())';
+                condicionFecha = 'YEAR(o.fecha_orden) = YEAR(NOW()) AND MONTH(o.fecha_orden) = MONTH(NOW())';
                 break;
             case 'año':
-                condicionFecha = 'YEAR(fecha_orden) = YEAR(NOW())';
+                condicionFecha = 'YEAR(o.fecha_orden) = YEAR(NOW())';
                 break;
             default:
                 condicionFecha = '1=1';
         }
 
         const [estadisticas] = await db.query(`
-            SELECT 
-                COUNT(*) as total_ordenes,
-                SUM(total) as ingresos_totales,
-                AVG(total) as ticket_promedio,
-                SUM(CASE WHEN estado = 'completado' THEN 1 ELSE 0 END) as ordenes_completadas,
-                SUM(CASE WHEN estado = 'pendiente' THEN 1 ELSE 0 END) as ordenes_pendientes
-            FROM ordenes 
-            WHERE activo = TRUE AND ${condicionFecha}
+            SELECT
+                COUNT(DISTINCT o.id) as total_ordenes,
+                SUM(o.total) as ingresos_totales,
+                AVG(o.total) as ticket_promedio,
+                SUM(CASE WHEN o.estado = 'completado' THEN 1 ELSE 0 END) as ordenes_completadas,
+                SUM(CASE WHEN o.estado = 'pendiente' THEN 1 ELSE 0 END) as ordenes_pendientes,
+                COALESCE(SUM(od.cantidad), 0) as total_productos_vendidos
+            FROM ordenes o
+            LEFT JOIN ordenes_detalle od ON o.id = od.orden_id
+            WHERE o.activo = TRUE AND o.estado != 'cancelado' AND ${condicionFecha}
         `);
 
         return estadisticas[0];

@@ -19,9 +19,17 @@ class VentasService {
         return response.data;
     }
 
-    // Obtener estadísticas generales
+    // Obtener estadísticas generales (solo ventas directas)
     async getEstadisticas(periodo = 'dia') {
         const response = await ventasApi.get('/ventas/estadisticas/generales', { // ⭐ AGREGAR /ventas
+            params: { periodo }
+        });
+        return response.data;
+    }
+
+    // Obtener estadísticas combinadas (ventas directas + compras de clientes)
+    async getEstadisticasCombinadas(periodo = 'mes') {
+        const response = await ventasApi.get('/ventas/estadisticas/combinadas', {
             params: { periodo }
         });
         return response.data;
