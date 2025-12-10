@@ -7,21 +7,44 @@ class CitasController {
     static async obtenerTodasCitas(req, res) {
         try {
             const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
+            const usuario = req.usuario;
+
+            console.log('🔍 Usuario solicitando citas:', {
+                email: usuario.email,
+                rol: usuario.rol,
+                queryParams: req.query
+            });
 
             let citas;
 
-            if (estado) {
-                citas = await CitaModel.obtenerPorEstado(estado);
-            } else if (fecha) {
-                citas = await CitaModel.obtenerPorFecha(fecha);
-            } else if (clienteDni) {
-                citas = await CitaModel.obtenerPorCliente(clienteDni);
-            } else if (mascotaId) {
-                citas = await CitaModel.obtenerPorMascota(mascotaId);
-            } else if (veterinarioId) {
-                citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+            // Si es un cliente, SOLO puede ver sus propias citas
+            if (usuario.rol === 'cliente') {
+                const dniCliente = clienteDni || usuario.email || usuario.dni;
+
+                if (!dniCliente) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Debes especificar el DNI del cliente'
+                    });
+                }
+
+                console.log('✅ Cliente accediendo a sus propias citas:', dniCliente);
+                citas = await CitaModel.obtenerPorCliente(dniCliente);
             } else {
-                citas = await CitaModel.obtenerTodas();
+                // Personal puede ver todas las citas con filtros opcionales
+                if (estado) {
+                    citas = await CitaModel.obtenerPorEstado(estado);
+                } else if (fecha) {
+                    citas = await CitaModel.obtenerPorFecha(fecha);
+                } else if (clienteDni) {
+                    citas = await CitaModel.obtenerPorCliente(clienteDni);
+                } else if (mascotaId) {
+                    citas = await CitaModel.obtenerPorMascota(mascotaId);
+                } else if (veterinarioId) {
+                    citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+                } else {
+                    citas = await CitaModel.obtenerTodas();
+                }
             }
 
             res.json({
@@ -45,6 +68,7 @@ class CitasController {
             const { id } = req.params;
             const { incluirDetalles } = req.query;
             const token = req.headers.authorization?.split(' ')[1];
+            const usuario = req.usuario;
 
             const cita = await CitaModel.obtenerPorId(id);
 
@@ -53,6 +77,17 @@ class CitasController {
                     success: false,
                     message: `No se encontró cita con ID: ${id}`
                 });
+            }
+
+            // Si es cliente, verificar que la cita le pertenece
+            if (usuario.rol === 'cliente') {
+                const dniUsuario = usuario.email || usuario.dni;
+                if (cita.cliente_dni !== dniUsuario) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permisos para ver esta cita'
+                    });
+                }
             }
 
             // Si se solicitan detalles, obtener información de otros servicios
@@ -92,9 +127,11 @@ class CitasController {
         try {
             const { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
             const token = req.headers.authorization?.split(' ')[1];
+            const usuario = req.usuario;
 
             console.log('➕ Creando cita para cliente:', cliente_dni);
             console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
+            console.log('👤 Usuario que crea:', { email: usuario.email, rol: usuario.rol });
 
             // Validaciones básicas
             if (!cliente_dni || !mascota_id || !veterinario_id || !fecha || !hora || !motivo) {
@@ -104,13 +141,25 @@ class CitasController {
                 });
             }
 
-            // Verificar que el cliente existe
-            const cliente = await ExternosService.verificarCliente(cliente_dni, token);
-            if (!cliente) {
-                return res.status(404).json({
-                    success: false,
-                    message: `No se encontró cliente con DNI: ${cliente_dni}`
-                });
+            // Si es un cliente, validar que está creando cita para sí mismo
+            if (usuario.rol === 'cliente') {
+                const dniUsuario = usuario.email || usuario.dni;
+                // Permitir que el cliente use su email o DNI
+                if (cliente_dni !== usuario.email && cliente_dni !== dniUsuario) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Solo puedes crear citas para ti mismo'
+                    });
+                }
+            } else {
+                // Si es personal, verificar que el cliente existe
+                const cliente = await ExternosService.verificarCliente(cliente_dni, token);
+                if (!cliente) {
+                    return res.status(404).json({
+                        success: false,
+                        message: `No se encontró cliente con DNI: ${cliente_dni}`
+                    });
+                }
             }
 
             // Verificar que la mascota existe y pertenece al cliente

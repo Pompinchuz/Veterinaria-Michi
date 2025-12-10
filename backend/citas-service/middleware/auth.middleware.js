@@ -74,6 +74,35 @@ class AuthMiddleware {
     static esPersonal(req, res, next) {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista'])(req, res, next);
     }
+
+    // Verificar que es personal O cliente (para operaciones donde el cliente puede ver sus propios recursos)
+    static esPersonalOCliente(req, res, next) {
+        return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista', 'cliente'])(req, res, next);
+    }
+
+    // Verificar que el cliente solo accede a sus propios recursos
+    // NOTA: Este middleware permite el acceso, pero el controlador debe validar
+    // que el cliente solo accede a sus propios datos consultando la BD
+    static verificarAccesoCliente(req, res, next) {
+        const usuario = req.usuario;
+
+        // Si es personal, tiene acceso completo
+        if (['admin', 'veterinario', 'enfermera', 'recepcionista'].includes(usuario.rol)) {
+            return next();
+        }
+
+        // Si es cliente, marcar en el request que es un cliente
+        // El controlador se encargará de filtrar solo sus datos
+        if (usuario.rol === 'cliente') {
+            req.esCliente = true;
+            return next();
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: 'No tienes permisos para acceder a este recurso'
+        });
+    }
 }
 
 module.exports = AuthMiddleware;
