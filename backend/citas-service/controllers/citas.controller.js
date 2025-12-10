@@ -4,32 +4,42 @@ const ExternosService = require('../services/externos.service');
 class CitasController {
 
     // GET /api/citas
-    // GET /api/citas
-static async obtenerTodasCitas(req, res) {
-    try {
-        const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
+    static async obtenerTodasCitas(req, res) {
+        try {
+            const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
+            const token = req.headers.authorization?.split(' ')[1];
 
-        let citas;
+            console.log('🔍 Usuario solicitando citas:', {
+                email: req.usuario.email,
+                rol: req.usuario.rol,
+                queryParams: req.query
+            });
 
-        if (estado) {
-            citas = await CitaModel.obtenerPorEstado(estado);
-        } else if (fecha) {
-            citas = await CitaModel.obtenerPorFecha(fecha);
-        } else if (clienteDni) {
-            citas = await CitaModel.obtenerPorCliente(clienteDni);
-        } else if (mascotaId) {
-            citas = await CitaModel.obtenerPorMascota(mascotaId);
-        } else if (veterinarioId) {
-            citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
-        } else {
-            // ⭐ Si es cliente, solo ver sus propias citas
-            if (req.usuario.rol === 'cliente') {
-                // Buscar DNI del cliente por email
-                const ClientesService = require('../services/externos.service');
-                const token = req.headers.authorization?.split(' ')[1];
-                
+            let citas;
+
+            // ⭐ IMPORTANTE: Los veterinarios solo pueden ver sus propias citas
+            if (req.usuario.rol === 'veterinario') {
                 try {
-                    const cliente = await ClientesService.verificarCliente(req.usuario.email, token);
+                    const veterinario = await ExternosService.buscarVeterinarioPorEmail(req.usuario.email, token);
+                    console.log('🔍 Veterinario encontrado:', veterinario);
+
+                    if (veterinario) {
+                        // Forzar el filtrado por veterinario, ignorando otros parámetros
+                        citas = await CitaModel.obtenerPorVeterinario(veterinario.id);
+                        console.log(`✅ Citas filtradas para veterinario ${veterinario.id}: ${citas.length} citas`);
+                    } else {
+                        console.log('❌ No se encontró veterinario con email:', req.usuario.email);
+                        citas = [];
+                    }
+                } catch (err) {
+                    console.error('❌ Error al buscar veterinario:', err);
+                    citas = [];
+                }
+            }
+            // ⭐ Los clientes solo pueden ver sus propias citas
+            else if (req.usuario.rol === 'cliente') {
+                try {
+                    const cliente = await ExternosService.verificarCliente(req.usuario.email, token);
                     if (cliente) {
                         citas = await CitaModel.obtenerPorCliente(cliente.dni);
                     } else {
@@ -38,11 +48,23 @@ static async obtenerTodasCitas(req, res) {
                 } catch (err) {
                     citas = [];
                 }
-            } else {
-                // Personal puede ver todas
-                citas = await CitaModel.obtenerTodas();
             }
-        }
+            // ⭐ Admin y otro personal pueden filtrar por diferentes criterios
+            else {
+                if (estado) {
+                    citas = await CitaModel.obtenerPorEstado(estado);
+                } else if (fecha) {
+                    citas = await CitaModel.obtenerPorFecha(fecha);
+                } else if (clienteDni) {
+                    citas = await CitaModel.obtenerPorCliente(clienteDni);
+                } else if (mascotaId) {
+                    citas = await CitaModel.obtenerPorMascota(mascotaId);
+                } else if (veterinarioId) {
+                    citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+                } else {
+                    citas = await CitaModel.obtenerTodas();
+                }
+            }
 
         res.json({
             success: true,
