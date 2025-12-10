@@ -7,21 +7,54 @@ class CitasController {
     static async obtenerTodasCitas(req, res) {
         try {
             const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
+            const token = req.headers.authorization?.split(' ')[1];
 
             let citas;
 
-            if (estado) {
-                citas = await CitaModel.obtenerPorEstado(estado);
-            } else if (fecha) {
-                citas = await CitaModel.obtenerPorFecha(fecha);
-            } else if (clienteDni) {
-                citas = await CitaModel.obtenerPorCliente(clienteDni);
-            } else if (mascotaId) {
-                citas = await CitaModel.obtenerPorMascota(mascotaId);
-            } else if (veterinarioId) {
-                citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+            // ⭐ Si es veterinario, solo puede ver sus propias citas
+            if (req.usuario.rol === 'veterinario') {
+                // Obtener el ID del veterinario basado en su email
+                const trabajador = await ExternosService.obtenerTrabajadorPorEmail(req.usuario.email, token);
+
+                if (!trabajador) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'No se encontró información del veterinario'
+                    });
+                }
+
+                // Forzar filtro por veterinario_id del usuario actual
+                const vetIdFiltro = trabajador.id;
+
+                // Aplicar filtros adicionales si se especifican
+                if (estado) {
+                    const todasCitas = await CitaModel.obtenerPorEstado(estado);
+                    citas = todasCitas.filter(c => c.veterinario_id === vetIdFiltro);
+                } else if (fecha) {
+                    const todasCitas = await CitaModel.obtenerPorFecha(fecha);
+                    citas = todasCitas.filter(c => c.veterinario_id === vetIdFiltro);
+                } else if (mascotaId) {
+                    const todasCitas = await CitaModel.obtenerPorMascota(mascotaId);
+                    citas = todasCitas.filter(c => c.veterinario_id === vetIdFiltro);
+                } else {
+                    // Solo sus citas
+                    citas = await CitaModel.obtenerPorVeterinario(vetIdFiltro);
+                }
             } else {
-                citas = await CitaModel.obtenerTodas();
+                // Admin, recepcionista, enfermera pueden ver según filtros o todas
+                if (estado) {
+                    citas = await CitaModel.obtenerPorEstado(estado);
+                } else if (fecha) {
+                    citas = await CitaModel.obtenerPorFecha(fecha);
+                } else if (clienteDni) {
+                    citas = await CitaModel.obtenerPorCliente(clienteDni);
+                } else if (mascotaId) {
+                    citas = await CitaModel.obtenerPorMascota(mascotaId);
+                } else if (veterinarioId) {
+                    citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+                } else {
+                    citas = await CitaModel.obtenerTodas();
+                }
             }
 
             res.json({
@@ -53,6 +86,25 @@ class CitasController {
                     success: false,
                     message: `No se encontró cita con ID: ${id}`
                 });
+            }
+
+            // ⭐ Si es veterinario, verificar que sea su propia cita
+            if (req.usuario.rol === 'veterinario') {
+                const trabajador = await ExternosService.obtenerTrabajadorPorEmail(req.usuario.email, token);
+
+                if (!trabajador) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'No se encontró información del veterinario'
+                    });
+                }
+
+                if (cita.veterinario_id !== trabajador.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para ver esta cita'
+                    });
+                }
             }
 
             // Si se solicitan detalles, obtener información de otros servicios
@@ -185,7 +237,34 @@ class CitasController {
                 });
             }
 
-            // Si se cambia veterinario, verificar que existe
+            // ⭐ Si es veterinario, verificar que sea su propia cita
+            if (req.usuario.rol === 'veterinario') {
+                const trabajador = await ExternosService.obtenerTrabajadorPorEmail(req.usuario.email, token);
+
+                if (!trabajador) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'No se encontró información del veterinario'
+                    });
+                }
+
+                if (citaExistente.veterinario_id !== trabajador.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para modificar esta cita'
+                    });
+                }
+
+                // Veterinario no puede cambiar de veterinario asignado
+                if (veterinario_id && veterinario_id !== trabajador.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No puedes reasignar la cita a otro veterinario'
+                    });
+                }
+            }
+
+            // Si se cambia veterinario, verificar que existe (solo admin puede hacer esto)
             if (veterinario_id && veterinario_id !== citaExistente.veterinario_id) {
                 const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
                 if (!veterinario) {

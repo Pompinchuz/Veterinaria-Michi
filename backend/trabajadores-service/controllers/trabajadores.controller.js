@@ -56,6 +56,33 @@ class TrabajadoresController {
         }
     }
 
+    // GET /api/trabajadores/email/:email
+    static async obtenerTrabajadorPorEmail(req, res) {
+        try {
+            const { email } = req.params;
+            const trabajador = await TrabajadorModel.obtenerPorEmail(email);
+
+            if (!trabajador) {
+                return res.status(404).json({
+                    success: false,
+                    message: `No se encontró trabajador con email: ${email}`
+                });
+            }
+
+            res.json({
+                success: true,
+                data: trabajador
+            });
+        } catch (error) {
+            console.error('Error al buscar trabajador por email:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al buscar trabajador',
+                error: error.message
+            });
+        }
+    }
+
     // GET /api/trabajadores/:id
     static async obtenerTrabajadorPorId(req, res) {
         try {

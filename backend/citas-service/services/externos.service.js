@@ -123,6 +123,25 @@ class ExternosService {
             throw error;
         }
     }
+
+    // Obtener trabajador por email
+    static async obtenerTrabajadorPorEmail(email, token) {
+        try {
+            console.log('🔍 Buscando trabajador con email:', email);
+            const respuesta = await axios.get(`${TRABAJADORES_SERVICE_URL}/api/trabajadores/email/${email}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            return respuesta.data.data;
+        } catch (error) {
+            console.error('❌ Error al buscar trabajador:', error.response?.data || error.message);
+            if (error.response && error.response.status === 404) {
+                return null;
+            }
+            throw new Error('Error al comunicarse con el servicio de trabajadores');
+        }
+    }
 }
 
 module.exports = ExternosService;
