@@ -2,6 +2,26 @@ const TrabajadorModel = require('../models/trabajador.model');
 
 class TrabajadoresController {
 
+    // GET /api/trabajadores/veterinarios - Obtener solo veterinarios (accesible por todo el personal)
+    static async obtenerVeterinarios(req, res) {
+        try {
+            const veterinarios = await TrabajadorModel.obtenerPorCargo('veterinario');
+
+            res.json({
+                success: true,
+                data: veterinarios,
+                count: veterinarios.length
+            });
+        } catch (error) {
+            console.error('Error al obtener veterinarios:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener veterinarios',
+                error: error.message
+            });
+        }
+    }
+
     // GET /api/trabajadores
     static async obtenerTodosTrabajadores(req, res) {
         try {
