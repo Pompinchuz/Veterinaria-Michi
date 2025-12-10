@@ -13,17 +13,22 @@ router.get('/veterinarios',
 );
 
 // Rutas principales - Solo admin puede gestionar trabajadores
-router.get('/', 
+router.get('/',
     AuthMiddleware.esAdmin,
     TrabajadoresController.obtenerTodosTrabajadores
 );
 
-router.get('/dni/:dni', 
+router.get('/dni/:dni',
     AuthMiddleware.esAdmin,
     TrabajadoresController.obtenerTrabajadorPorDni
 );
 
-router.get('/:id', 
+router.get('/email/:email',
+    AuthMiddleware.esPersonal,
+    TrabajadoresController.obtenerTrabajadorPorEmail
+);
+
+router.get('/:id',
     AuthMiddleware.esAdmin,
     TrabajadoresController.obtenerTrabajadorPorId
 );

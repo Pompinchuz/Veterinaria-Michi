@@ -75,6 +75,25 @@ static async obtenerTodasCitas(req, res) {
                 });
             }
 
+            // ⭐ Si es veterinario, verificar que sea su propia cita
+            if (req.usuario.rol === 'veterinario') {
+                const trabajador = await ExternosService.obtenerTrabajadorPorEmail(req.usuario.email, token);
+
+                if (!trabajador) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'No se encontró información del veterinario'
+                    });
+                }
+
+                if (cita.veterinario_id !== trabajador.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para ver esta cita'
+                    });
+                }
+            }
+
             // Si se solicitan detalles, obtener información de otros servicios
             if (incluirDetalles === 'true') {
                 try {
@@ -205,7 +224,34 @@ static async obtenerTodasCitas(req, res) {
                 });
             }
 
-            // Si se cambia veterinario, verificar que existe
+            // ⭐ Si es veterinario, verificar que sea su propia cita
+            if (req.usuario.rol === 'veterinario') {
+                const trabajador = await ExternosService.obtenerTrabajadorPorEmail(req.usuario.email, token);
+
+                if (!trabajador) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'No se encontró información del veterinario'
+                    });
+                }
+
+                if (citaExistente.veterinario_id !== trabajador.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permiso para modificar esta cita'
+                    });
+                }
+
+                // Veterinario no puede cambiar de veterinario asignado
+                if (veterinario_id && veterinario_id !== trabajador.id) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No puedes reasignar la cita a otro veterinario'
+                    });
+                }
+            }
+
+            // Si se cambia veterinario, verificar que existe (solo admin puede hacer esto)
             if (veterinario_id && veterinario_id !== citaExistente.veterinario_id) {
                 const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
                 if (!veterinario) {
