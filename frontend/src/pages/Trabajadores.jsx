@@ -30,6 +30,7 @@ function Trabajadores() {
         especialidad: '',
         telefono: '',
         email: '',
+        password: '',
         direccion: '',
         fecha_ingreso: '',
         salario: ''
@@ -101,6 +102,7 @@ function Trabajadores() {
                 especialidad: '',
                 telefono: '',
                 email: '',
+                password: '',
                 direccion: '',
                 fecha_ingreso: '',
                 salario: ''
@@ -150,56 +152,32 @@ function Trabajadores() {
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+        e.preventDefault();
+        setError('');
 
-    try {
-        const dataToSend = {
-            ...formData,
-            salario: formData.salario ? Number(formData.salario) : null
-        };
+        try {
+            const dataToSend = {
+                ...formData,
+                salario: formData.salario ? Number(formData.salario) : null
+            };
 
-        if (modalMode === 'create') {
-            // Crear trabajador
-            const trabajadorResponse = await TrabajadoresService.create(dataToSend);
-            
-            // ⭐ NUEVO: Si el trabajador NO es administrativo, crear usuario de autenticación
-            if (formData.cargo !== 'administrativo' && formData.email) {
-                try {
-                    const token = localStorage.getItem('accessToken');
-                    
-                    // Determinar el rol según el cargo
-                    let rol = 'recepcionista';
-                    if (formData.cargo === 'veterinario') rol = 'veterinario';
-                    else if (formData.cargo === 'enfermera') rol = 'enfermera';
-                    
-                    // Generar contraseña temporal (puedes personalizar esto)
-                    const passwordTemporal = `${formData.dni}123`;
-                    
-                    await AuthService.crearUsuarioTrabajador({
-                        email: formData.email,
-                        password: passwordTemporal,
-                        nombre: formData.nombres,
-                        apellido: formData.apellidos,
-                        rol: rol
-                    }, token);
-                    
-                    alert(`✅ Trabajador y usuario creados exitosamente.\n\n📧 Email: ${formData.email}\n🔑 Contraseña temporal: ${passwordTemporal}\n\n⚠️ Se recomienda cambiar la contraseña en el primer inicio de sesión.`);
-                } catch (authError) {
-                    console.error('Error al crear usuario:', authError);
-                    alert('⚠️ Trabajador creado, pero hubo un error al crear el usuario de autenticación. Por favor, créalo manualmente.');
-                }
+            if (modalMode === 'create') {
+                // Backend ahora maneja tanto la creación del trabajador como del usuario
+                const response = await TrabajadoresService.create(dataToSend);
+
+                alert(`✅ Empleado y cuenta de usuario creados exitosamente.\n\n📧 Email: ${formData.email}\n🔑 Contraseña: ${formData.password}\n\n⚠️ Se recomienda cambiar la contraseña en el primer inicio de sesión.`);
+            } else {
+                // Al editar, no incluir password
+                const { password, ...dataToUpdate } = dataToSend;
+                await TrabajadoresService.update(selectedTrabajador.id, dataToUpdate);
             }
-        } else {
-            await TrabajadoresService.update(selectedTrabajador.id, dataToSend);
+
+            await loadTrabajadores();
+            handleCloseModal();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error al guardar trabajador');
         }
-        
-        await loadTrabajadores();
-        handleCloseModal();
-    } catch (err) {
-        setError(err.response?.data?.message || 'Error al guardar trabajador');
-    }
-};
+    };
 
     const handleHorarioSubmit = async (e) => {
         e.preventDefault();
@@ -527,23 +505,43 @@ function Trabajadores() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="email">Email</label>
+                            <label htmlFor="email">Email *</label>
                             <input
                                 type="email"
                                 id="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
-                                required={modalMode === 'create'} 
+                                required={modalMode === 'create'}
+                                disabled={modalMode === 'edit'}
                                 placeholder="trabajador@vetclinic.com"
                             />
                             {modalMode === 'create' && (
-        <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-            Se creará un usuario con esta dirección de email para acceder al sistema
-        </small>
-    )}
+                                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                    Se creará una cuenta de usuario con este email
+                                </small>
+                            )}
                         </div>
                     </div>
+
+                    {modalMode === 'create' && (
+                        <div className="form-group">
+                            <label htmlFor="password">Contraseña *</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleInputChange}
+                                required
+                                minLength="6"
+                                placeholder="Mínimo 6 caracteres"
+                            />
+                            <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                Esta contraseña será usada por el empleado para iniciar sesión en el sistema
+                            </small>
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label htmlFor="direccion">Dirección</label>
