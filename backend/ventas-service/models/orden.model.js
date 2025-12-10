@@ -188,7 +188,7 @@ class OrdenModel {
     // Top productos más vendidos (desde órdenes)
     static async topProductos(limite = 10) {
         const [productos] = await db.query(`
-            SELECT 
+            SELECT
                 od.producto_id,
                 od.producto_nombre,
                 od.producto_categoria,
@@ -205,6 +205,84 @@ class OrdenModel {
         `, [limite]);
 
         return productos;
+    }
+
+    // Órdenes agrupadas por día (para gráficos)
+    static async ordenesPorDia(dias = 30) {
+        const [ordenes] = await db.query(`
+            SELECT
+                DATE(o.fecha_orden) as fecha,
+                COUNT(DISTINCT o.id) as total_ventas,
+                SUM(od.cantidad) as productos_vendidos,
+                SUM(o.total) as ingresos,
+                AVG(o.total) as ticket_promedio
+            FROM ordenes o
+            INNER JOIN ordenes_detalle od ON o.id = od.orden_id
+            WHERE o.activo = TRUE
+            AND o.estado != 'cancelado'
+            AND o.fecha_orden >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            GROUP BY DATE(o.fecha_orden)
+            ORDER BY fecha ASC
+        `, [dias]);
+
+        return ordenes;
+    }
+
+    // Órdenes por método de pago en un período
+    static async ordenesPorMetodoPagoPeriodo(dias = 30) {
+        const [metodos] = await db.query(`
+            SELECT
+                metodo_pago,
+                COUNT(*) as total_ventas,
+                SUM(total) as total_ingresos,
+                AVG(total) as ticket_promedio
+            FROM ordenes
+            WHERE activo = TRUE
+            AND estado != 'cancelado'
+            AND fecha_orden >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            GROUP BY metodo_pago
+            ORDER BY total_ingresos DESC
+        `, [dias]);
+
+        return metodos;
+    }
+
+    // Órdenes por categoría de producto
+    static async ordenesPorCategoria(dias = 30) {
+        const [categorias] = await db.query(`
+            SELECT
+                od.producto_categoria as categoria,
+                COUNT(DISTINCT o.id) as total_ventas,
+                SUM(od.cantidad) as productos_vendidos,
+                SUM(od.subtotal) as ingresos
+            FROM ordenes_detalle od
+            INNER JOIN ordenes o ON od.orden_id = o.id
+            WHERE o.activo = TRUE
+            AND o.estado != 'cancelado'
+            AND o.fecha_orden >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+            GROUP BY od.producto_categoria
+            ORDER BY ingresos DESC
+        `, [dias]);
+
+        return categorias;
+    }
+
+    // Resumen de órdenes por hora del día
+    static async ordenesPorHora(dias = 7) {
+        const [horas] = await db.query(`
+            SELECT
+                HOUR(fecha_orden) as hora,
+                COUNT(*) as total_ventas,
+                SUM(total) as ingresos
+            FROM ordenes
+            WHERE activo = TRUE
+            AND estado != 'cancelado'
+            AND fecha_orden >= DATE_SUB(NOW(), INTERVAL ? DAY)
+            GROUP BY HOUR(fecha_orden)
+            ORDER BY hora ASC
+        `, [dias]);
+
+        return horas;
     }
 }
 

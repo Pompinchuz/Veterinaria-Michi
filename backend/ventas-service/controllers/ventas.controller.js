@@ -407,17 +407,66 @@ class VentasController {
         }
     }
 
-    // GET /api/ventas/graficos/por-dia - Ventas agrupadas por día para gráficos
+    // GET /api/ventas/graficos/por-dia - Ventas y órdenes agrupadas por día para gráficos
     static async ventasPorDiaGrafico(req, res) {
         try {
             const dias = parseInt(req.query.dias) || 30;
-            const ventas = await VentaModel.ventasPorDia(dias);
+
+            // Obtener ventas directas y órdenes de clientes
+            const [ventasDirectas, ordenesClientes] = await Promise.all([
+                VentaModel.ventasPorDia(dias),
+                OrdenModel.ordenesPorDia(dias)
+            ]);
+
+            // Combinar los datos por fecha
+            const datosCombinados = {};
+
+            // Agregar ventas directas
+            for (const venta of ventasDirectas) {
+                const fecha = venta.fecha;
+                datosCombinados[fecha] = {
+                    fecha,
+                    total_ventas: parseInt(venta.total_ventas) || 0,
+                    productos_vendidos: parseInt(venta.productos_vendidos) || 0,
+                    ingresos: parseFloat(venta.ingresos) || 0,
+                    ticket_promedio: parseFloat(venta.ticket_promedio) || 0
+                };
+            }
+
+            // Agregar órdenes de clientes
+            for (const orden of ordenesClientes) {
+                const fecha = orden.fecha;
+                if (datosCombinados[fecha]) {
+                    datosCombinados[fecha].total_ventas += parseInt(orden.total_ventas) || 0;
+                    datosCombinados[fecha].productos_vendidos += parseInt(orden.productos_vendidos) || 0;
+                    datosCombinados[fecha].ingresos += parseFloat(orden.ingresos) || 0;
+
+                    // Recalcular ticket promedio
+                    const totalVentas = datosCombinados[fecha].total_ventas;
+                    const totalIngresos = datosCombinados[fecha].ingresos;
+                    datosCombinados[fecha].ticket_promedio = totalVentas > 0 ? totalIngresos / totalVentas : 0;
+                } else {
+                    datosCombinados[fecha] = {
+                        fecha,
+                        total_ventas: parseInt(orden.total_ventas) || 0,
+                        productos_vendidos: parseInt(orden.productos_vendidos) || 0,
+                        ingresos: parseFloat(orden.ingresos) || 0,
+                        ticket_promedio: parseFloat(orden.ticket_promedio) || 0
+                    };
+                }
+            }
+
+            // Convertir a array y ordenar por fecha
+            const resultado = Object.values(datosCombinados).sort((a, b) => {
+                return new Date(a.fecha) - new Date(b.fecha);
+            });
 
             res.json({
                 success: true,
-                data: ventas,
+                data: resultado,
                 periodo: `${dias} días`,
-                count: ventas.length
+                count: resultado.length,
+                nota: 'Incluye ventas directas y compras de clientes'
             });
 
         } catch (error) {
@@ -430,17 +479,63 @@ class VentasController {
         }
     }
 
-    // GET /api/ventas/graficos/por-metodo - Ventas por método de pago
+    // GET /api/ventas/graficos/por-metodo - Ventas y órdenes por método de pago
     static async ventasPorMetodoGrafico(req, res) {
         try {
             const dias = parseInt(req.query.dias) || 30;
-            const metodos = await VentaModel.ventasPorMetodoPagoPeriodo(dias);
+
+            // Obtener ventas directas y órdenes de clientes
+            const [ventasDirectas, ordenesClientes] = await Promise.all([
+                VentaModel.ventasPorMetodoPagoPeriodo(dias),
+                OrdenModel.ordenesPorMetodoPagoPeriodo(dias)
+            ]);
+
+            // Combinar los datos por método de pago
+            const metodosCombinados = {};
+
+            // Agregar ventas directas
+            for (const venta of ventasDirectas) {
+                const metodo = venta.metodo_pago;
+                metodosCombinados[metodo] = {
+                    metodo_pago: metodo,
+                    total_ventas: parseInt(venta.total_ventas) || 0,
+                    total_ingresos: parseFloat(venta.total_ingresos) || 0,
+                    ticket_promedio: parseFloat(venta.ticket_promedio) || 0
+                };
+            }
+
+            // Agregar órdenes de clientes
+            for (const orden of ordenesClientes) {
+                const metodo = orden.metodo_pago;
+                if (metodosCombinados[metodo]) {
+                    metodosCombinados[metodo].total_ventas += parseInt(orden.total_ventas) || 0;
+                    metodosCombinados[metodo].total_ingresos += parseFloat(orden.total_ingresos) || 0;
+
+                    // Recalcular ticket promedio
+                    const totalVentas = metodosCombinados[metodo].total_ventas;
+                    const totalIngresos = metodosCombinados[metodo].total_ingresos;
+                    metodosCombinados[metodo].ticket_promedio = totalVentas > 0 ? totalIngresos / totalVentas : 0;
+                } else {
+                    metodosCombinados[metodo] = {
+                        metodo_pago: metodo,
+                        total_ventas: parseInt(orden.total_ventas) || 0,
+                        total_ingresos: parseFloat(orden.total_ingresos) || 0,
+                        ticket_promedio: parseFloat(orden.ticket_promedio) || 0
+                    };
+                }
+            }
+
+            // Convertir a array y ordenar por total ingresos
+            const resultado = Object.values(metodosCombinados).sort((a, b) => {
+                return b.total_ingresos - a.total_ingresos;
+            });
 
             res.json({
                 success: true,
-                data: metodos,
+                data: resultado,
                 periodo: `${dias} días`,
-                count: metodos.length
+                count: resultado.length,
+                nota: 'Incluye ventas directas y compras de clientes'
             });
 
         } catch (error) {
@@ -453,17 +548,59 @@ class VentasController {
         }
     }
 
-    // GET /api/ventas/graficos/por-categoria - Ventas por categoría
+    // GET /api/ventas/graficos/por-categoria - Ventas y órdenes por categoría
     static async ventasPorCategoriaGrafico(req, res) {
         try {
             const dias = parseInt(req.query.dias) || 30;
-            const categorias = await VentaModel.ventasPorCategoria(dias);
+
+            // Obtener ventas directas y órdenes de clientes
+            const [ventasDirectas, ordenesClientes] = await Promise.all([
+                VentaModel.ventasPorCategoria(dias),
+                OrdenModel.ordenesPorCategoria(dias)
+            ]);
+
+            // Combinar los datos por categoría
+            const categoriasCombinadas = {};
+
+            // Agregar ventas directas
+            for (const venta of ventasDirectas) {
+                const categoria = venta.categoria || 'otro';
+                categoriasCombinadas[categoria] = {
+                    categoria,
+                    total_ventas: parseInt(venta.total_ventas) || 0,
+                    productos_vendidos: parseInt(venta.productos_vendidos) || 0,
+                    ingresos: parseFloat(venta.ingresos) || 0
+                };
+            }
+
+            // Agregar órdenes de clientes
+            for (const orden of ordenesClientes) {
+                const categoria = orden.categoria || 'otro';
+                if (categoriasCombinadas[categoria]) {
+                    categoriasCombinadas[categoria].total_ventas += parseInt(orden.total_ventas) || 0;
+                    categoriasCombinadas[categoria].productos_vendidos += parseInt(orden.productos_vendidos) || 0;
+                    categoriasCombinadas[categoria].ingresos += parseFloat(orden.ingresos) || 0;
+                } else {
+                    categoriasCombinadas[categoria] = {
+                        categoria,
+                        total_ventas: parseInt(orden.total_ventas) || 0,
+                        productos_vendidos: parseInt(orden.productos_vendidos) || 0,
+                        ingresos: parseFloat(orden.ingresos) || 0
+                    };
+                }
+            }
+
+            // Convertir a array y ordenar por ingresos
+            const resultado = Object.values(categoriasCombinadas).sort((a, b) => {
+                return b.ingresos - a.ingresos;
+            });
 
             res.json({
                 success: true,
-                data: categorias,
+                data: resultado,
                 periodo: `${dias} días`,
-                count: categorias.length
+                count: resultado.length,
+                nota: 'Incluye ventas directas y compras de clientes'
             });
 
         } catch (error) {
@@ -476,17 +613,56 @@ class VentasController {
         }
     }
 
-    // GET /api/ventas/graficos/por-hora - Ventas por hora
+    // GET /api/ventas/graficos/por-hora - Ventas y órdenes por hora
     static async ventasPorHoraGrafico(req, res) {
         try {
             const dias = parseInt(req.query.dias) || 7;
-            const horas = await VentaModel.ventasPorHora(dias);
+
+            // Obtener ventas directas y órdenes de clientes
+            const [ventasDirectas, ordenesClientes] = await Promise.all([
+                VentaModel.ventasPorHora(dias),
+                OrdenModel.ordenesPorHora(dias)
+            ]);
+
+            // Combinar los datos por hora
+            const horasCombinadas = {};
+
+            // Agregar ventas directas
+            for (const venta of ventasDirectas) {
+                const hora = venta.hora;
+                horasCombinadas[hora] = {
+                    hora,
+                    total_ventas: parseInt(venta.total_ventas) || 0,
+                    ingresos: parseFloat(venta.ingresos) || 0
+                };
+            }
+
+            // Agregar órdenes de clientes
+            for (const orden of ordenesClientes) {
+                const hora = orden.hora;
+                if (horasCombinadas[hora]) {
+                    horasCombinadas[hora].total_ventas += parseInt(orden.total_ventas) || 0;
+                    horasCombinadas[hora].ingresos += parseFloat(orden.ingresos) || 0;
+                } else {
+                    horasCombinadas[hora] = {
+                        hora,
+                        total_ventas: parseInt(orden.total_ventas) || 0,
+                        ingresos: parseFloat(orden.ingresos) || 0
+                    };
+                }
+            }
+
+            // Convertir a array y ordenar por hora
+            const resultado = Object.values(horasCombinadas).sort((a, b) => {
+                return a.hora - b.hora;
+            });
 
             res.json({
                 success: true,
-                data: horas,
+                data: resultado,
                 periodo: `${dias} días`,
-                count: horas.length
+                count: resultado.length,
+                nota: 'Incluye ventas directas y compras de clientes'
             });
 
         } catch (error) {
