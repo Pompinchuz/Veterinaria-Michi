@@ -55,6 +55,14 @@ class CitasController {
                 });
             }
 
+            // Si es cliente, verificar que la cita le pertenece
+            if (req.usuario.rol === 'cliente' && cita.cliente_dni !== req.usuario.dni) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tienes permisos para acceder a esta cita'
+                });
+            }
+
             // Si se solicitan detalles, obtener información de otros servicios
             if (incluirDetalles === 'true') {
                 try {
@@ -95,12 +103,21 @@ class CitasController {
 
             console.log('➕ Creando cita para cliente:', cliente_dni);
             console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
+            console.log('👤 Usuario que crea:', req.usuario.rol, req.usuario.dni);
 
             // Validaciones básicas
             if (!cliente_dni || !mascota_id || !veterinario_id || !fecha || !hora || !motivo) {
                 return res.status(400).json({
                     success: false,
                     message: 'Todos los campos son obligatorios: cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo'
+                });
+            }
+
+            // Si es cliente, solo puede crear citas para sí mismo
+            if (req.usuario.rol === 'cliente' && cliente_dni !== req.usuario.dni) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Solo puedes crear citas para ti mismo'
                 });
             }
 

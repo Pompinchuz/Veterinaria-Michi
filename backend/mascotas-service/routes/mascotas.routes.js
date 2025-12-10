@@ -6,19 +6,22 @@ const AuthMiddleware = require('../middleware/auth.middleware');
 // Aplicar autenticación a todas las rutas
 router.use(AuthMiddleware.verificarToken);
 
-// Rutas principales - Personal puede ver todo
-router.get('/', 
+// Rutas principales
+// Solo personal puede ver todas las mascotas
+router.get('/',
     AuthMiddleware.esPersonal,
     MascotasController.obtenerTodasMascotas
 );
 
-router.get('/cliente/:dni', 
-    AuthMiddleware.esPersonal,
+// Personal puede ver mascotas de cualquier cliente, clientes sus propias mascotas
+router.get('/cliente/:dni',
+    AuthMiddleware.esPersonalOCliente,
     MascotasController.obtenerMascotasPorClienteDni
 );
 
-router.get('/:id', 
-    AuthMiddleware.esPersonal,
+// Personal y clientes pueden ver detalles de mascotas (se validará en controlador)
+router.get('/:id',
+    AuthMiddleware.esPersonalOCliente,
     MascotasController.obtenerMascotaPorId
 );
 

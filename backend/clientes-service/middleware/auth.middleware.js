@@ -74,6 +74,50 @@ class AuthMiddleware {
     static esPersonal(req, res, next) {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista'])(req, res, next);
     }
+
+    // Verificar que es personal O cliente (para operaciones específicas)
+    static esPersonalOCliente(req, res, next) {
+        return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista', 'cliente'])(req, res, next);
+    }
+
+    // Verificar acceso a datos de cliente (personal puede ver todos, cliente solo los suyos)
+    static verificarAccesoDatosCliente(req, res, next) {
+        if (!req.usuario) {
+            return res.status(401).json({
+                success: false,
+                message: 'No autenticado'
+            });
+        }
+
+        console.log('🔍 Usuario accediendo a datos de cliente:', {
+            email: req.usuario.email,
+            rol: req.usuario.rol,
+            dniSolicitado: req.params.dni
+        });
+
+        // Si es personal, puede acceder a todos los clientes
+        if (['admin', 'veterinario', 'enfermera', 'recepcionista'].includes(req.usuario.rol)) {
+            return next();
+        }
+
+        // Si es cliente, solo puede acceder a sus propios datos
+        if (req.usuario.rol === 'cliente') {
+            // Verificar que el DNI solicitado coincide con su DNI
+            if (req.params.dni && req.params.dni !== req.usuario.dni) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Solo puedes acceder a tu propia información'
+                });
+            }
+            return next();
+        }
+
+        // Cualquier otro rol no tiene acceso
+        return res.status(403).json({
+            success: false,
+            message: 'No tienes permisos para acceder a este recurso'
+        });
+    }
 }
 
 module.exports = AuthMiddleware;

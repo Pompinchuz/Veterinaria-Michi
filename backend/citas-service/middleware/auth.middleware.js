@@ -74,6 +74,52 @@ class AuthMiddleware {
     static esPersonal(req, res, next) {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista'])(req, res, next);
     }
+
+    // Verificar que es personal O cliente (para operaciones específicas)
+    static esPersonalOCliente(req, res, next) {
+        return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista', 'cliente'])(req, res, next);
+    }
+
+    // Verificar que el cliente solo accede a sus propios datos
+    static verificarAccesoCliente(req, res, next) {
+        if (!req.usuario) {
+            return res.status(401).json({
+                success: false,
+                message: 'No autenticado'
+            });
+        }
+
+        console.log('🔍 Usuario solicitando citas:', {
+            email: req.usuario.email,
+            rol: req.usuario.rol,
+            queryParams: req.query
+        });
+
+        // Si es personal, puede acceder a todo
+        if (['admin', 'veterinario', 'enfermera', 'recepcionista'].includes(req.usuario.rol)) {
+            return next();
+        }
+
+        // Si es cliente, solo puede acceder a sus propias citas
+        if (req.usuario.rol === 'cliente') {
+            // Para GET /api/citas - debe filtrar por su DNI
+            if (req.method === 'GET' && !req.params.id) {
+                // Forzar que solo vea sus propias citas
+                req.query.clienteDni = req.usuario.dni;
+            }
+
+            // Para GET /api/citas/:id - verificaremos en el controlador
+            // Para POST /api/citas - verificaremos en el controlador que el DNI coincida
+
+            return next();
+        }
+
+        // Cualquier otro rol no tiene acceso
+        return res.status(403).json({
+            success: false,
+            message: 'No tienes permisos para acceder a este recurso'
+        });
+    }
 }
 
 module.exports = AuthMiddleware;
