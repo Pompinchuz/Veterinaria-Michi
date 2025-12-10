@@ -141,11 +141,13 @@ function Dashboard() {
                         <p>Gestionar citas</p>
                     </div>
 
-                    <div className="dashboard-card" onClick={() => navigate('/ventas')}>
-                     <div className="card-icon">💰</div>
-                    <h3>Ventas</h3>
-                    <p>Registrar ventas</p>
-                    </div>
+                    {(user?.rol === 'admin' || user?.rol === 'recepcionista' || user?.rol === 'enfermera') && (
+                        <div className="dashboard-card" onClick={() => navigate('/ventas')}>
+                            <div className="card-icon">💰</div>
+                            <h3>Ventas</h3>
+                            <p>Registrar ventas</p>
+                        </div>
+                    )}
 
                     {user?.rol === 'admin' && (
                         <div className="module-card" onClick={() => navigate('/trabajadores')}>
