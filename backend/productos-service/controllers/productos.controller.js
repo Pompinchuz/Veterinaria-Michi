@@ -1,3 +1,4 @@
+//productos-service/controllers/productos.controller.js
 const Producto = require('../models/producto.model');
 
 class ProductosController {

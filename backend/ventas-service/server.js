@@ -18,28 +18,24 @@ app.use((req, res, next) => {
 
 // Rutas
 const ventasRoutes = require('./routes/ventas.routes');
-const ordenesRoutes = require('./routes/ordenes.routes');
-const facturasRoutes = require('./routes/facturas.routes');
+const ordenesRoutes = require('./routes/ordenes.routes'); // ⭐ NUEVO
 
 app.use('/api/ventas', ventasRoutes);
-app.use('/api/ordenes', ordenesRoutes);
-app.use('/api/facturas', facturasRoutes);
+app.use('/api/ordenes', ordenesRoutes); // ⭐ NUEVO
 
 // Ruta de salud
 app.get('/', (req, res) => {
     res.json({
         success: true,
         message: 'Ventas Service API',
-        version: '1.1.0',
+        version: '1.0.0',
         endpoints: {
             ventas: '/api/ventas',
-            ordenes: '/api/ordenes',
-            facturas: '/api/facturas',
+            ordenes: '/api/ordenes', // ⭐ NUEVO
             estadisticas: '/api/ventas/estadisticas/generales',
             topProductos: '/api/ventas/top-productos',
             ventasDelDia: '/api/ventas/dia',
-            misCompras: '/api/ordenes/mis-compras',
-            misFacturas: '/api/facturas/mis-facturas'
+            misCompras: '/api/ordenes/mis-compras' // ⭐ NUEVO
         }
     });
 });

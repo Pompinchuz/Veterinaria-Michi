@@ -2,7 +2,6 @@
 
 const VentaModel = require('../models/venta.model');
 const OrdenModel = require('../models/orden.model');
-const FacturaModel = require('../models/factura.model');
 const ExternosService = require('../services/externos.service');
 
 class VentasController {
@@ -99,46 +98,10 @@ class VentasController {
 
             console.log('✅ Venta registrada exitosamente:', ventaId);
 
-            // Generar factura electrónica automáticamente
-            let factura = null;
-            try {
-                const subtotal = parseFloat(ventaCreada.precio_total) / 1.18;
-                const igv = parseFloat(ventaCreada.precio_total) - subtotal;
-
-                const facturaData = {
-                    tipo_transaccion: 'venta',
-                    referencia_id: ventaCreada.id,
-                    cliente_dni: ventaCreada.cliente_dni,
-                    cliente_nombre: ventaCreada.cliente_nombre || 'Cliente General',
-                    cliente_email: null,
-                    cliente_direccion: null,
-                    subtotal: subtotal.toFixed(2),
-                    igv: igv.toFixed(2),
-                    total: parseFloat(ventaCreada.precio_total).toFixed(2),
-                    metodo_pago: ventaCreada.metodo_pago,
-                    detalles: [{
-                        producto_id: ventaCreada.producto_id,
-                        descripcion: ventaCreada.producto_nombre + (ventaCreada.producto_categoria ? ` (${ventaCreada.producto_categoria})` : ''),
-                        cantidad: ventaCreada.cantidad,
-                        precio_unitario: parseFloat(ventaCreada.precio_unitario).toFixed(2),
-                        subtotal: parseFloat(ventaCreada.precio_total).toFixed(2)
-                    }],
-                    observaciones: ventaCreada.observaciones
-                };
-
-                const facturaId = await FacturaModel.crear(facturaData);
-                factura = await FacturaModel.obtenerPorId(facturaId);
-                console.log('📄 Factura generada automáticamente:', factura.numero_factura_formateado);
-            } catch (facturaError) {
-                console.error('⚠️ Error al generar factura automática:', facturaError.message);
-                // No detener el proceso si falla la factura
-            }
-
             res.status(201).json({
                 success: true,
                 message: 'Venta registrada exitosamente',
-                data: ventaCreada,
-                factura: factura
+                data: ventaCreada
             });
 
         } catch (error) {
