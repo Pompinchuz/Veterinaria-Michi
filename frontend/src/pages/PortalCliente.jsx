@@ -1,3 +1,4 @@
+//s
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +10,6 @@ import ClientesService from '../services/clientes.service';
 import OrdenesService from '../services/ordenes.service';
 import CarritoFlotante from '../components/CarritoFlotante';
 import Modal from '../components/Modal';
-import ModalFactura from '../components/ModalFactura';
 import './PortalCliente.css';
 
 function PortalCliente() {
@@ -33,13 +33,6 @@ function PortalCliente() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-<<<<<<< HEAD
-=======
-    // Estados para factura
-    const [showFacturaModal, setShowFacturaModal] = useState(false);
-    const [facturaActual, setFacturaActual] = useState(null);
-
->>>>>>> 55f2083 (Agregar pop-up automático de factura al completar compra)
     const { user, logout } = useAuth();
     const { carrito, agregarAlCarrito, actualizarCantidad, eliminarDelCarrito, vaciarCarrito, calcularTotal, getCantidadTotal } = useCarrito();
     const navigate = useNavigate();
@@ -132,51 +125,25 @@ function PortalCliente() {
                 cantidad: item.cantidadCarrito
             }));
 
-<<<<<<< HEAD
             await OrdenesService.realizarCompra({
-=======
-            const response = await OrdenesService.realizarCompra({
->>>>>>> 55f2083 (Agregar pop-up automático de factura al completar compra)
                 productos: productosCompra,
                 metodo_pago: metodoPago,
                 direccion_entrega: cliente?.direccion || '',
                 observaciones: observaciones || null
             });
 
-<<<<<<< HEAD
             setSuccess('🎉 ¡Compra realizada exitosamente!');
-=======
-            // Limpiar el carrito y cerrar modal
->>>>>>> 55f2083 (Agregar pop-up automático de factura al completar compra)
             vaciarCarrito();
             setShowCarritoModal(false);
             setObservaciones('');
             setMetodoPago('efectivo');
-<<<<<<< HEAD
             
-=======
-
-            // Si la respuesta incluye una factura, mostrar el modal de factura
-            if (response.factura) {
-                setFacturaActual(response.factura);
-                setShowFacturaModal(true);
-            } else {
-                setSuccess('🎉 ¡Compra realizada exitosamente!');
-                setTimeout(() => setSuccess(''), 2000);
-            }
-
->>>>>>> 55f2083 (Agregar pop-up automático de factura al completar compra)
             // Recargar productos para actualizar stock
             const productosResponse = await ProductosService.getAll();
             setProductos(productosResponse.data || []);
 
-<<<<<<< HEAD
             setTimeout(() => {
                 setSuccess('');
-=======
-            // Recargar compras
-            setTimeout(() => {
->>>>>>> 55f2083 (Agregar pop-up automático de factura al completar compra)
                 setActiveTab('compras');
             }, 2000);
 
@@ -677,20 +644,6 @@ function PortalCliente() {
                     </div>
                 )}
             </Modal>
-<<<<<<< HEAD
-=======
-
-            {/* Modal de Factura Electrónica */}
-            <ModalFactura
-                isOpen={showFacturaModal}
-                onClose={() => setShowFacturaModal(false)}
-                factura={facturaActual}
-                onDescargar={() => {
-                    setSuccess('📄 Factura descargada exitosamente');
-                    setTimeout(() => setSuccess(''), 3000);
-                }}
-            />
->>>>>>> 55f2083 (Agregar pop-up automático de factura al completar compra)
         </div>
     );
 }
