@@ -1,6 +1,7 @@
 //ventas-service/controllers/ventas.controller.js
 
 const VentaModel = require('../models/venta.model');
+const OrdenModel = require('../models/orden.model');
 const ExternosService = require('../services/externos.service');
 
 class VentasController {
@@ -298,8 +299,8 @@ class VentasController {
 
             // Restaurar el stock del producto
             await ExternosService.aumentarStock(
-                venta.producto_id, 
-                venta.cantidad, 
+                venta.producto_id,
+                venta.cantidad,
                 token
             );
 
@@ -318,6 +319,89 @@ class VentasController {
             res.status(500).json({
                 success: false,
                 message: 'Error al anular venta',
+                error: error.message
+            });
+        }
+    }
+
+    // GET /api/ventas/top-productos-combinado - Top productos combinando ventas y órdenes
+    static async topProductosCombinado(req, res) {
+        try {
+            const limite = parseInt(req.query.limite) || 10;
+
+            // Obtener top productos de ventas directas
+            const topVentas = await VentaModel.topProductos(100);
+
+            // Obtener top productos de órdenes (compras de clientes)
+            const topOrdenes = await OrdenModel.topProductos(100);
+
+            // Combinar ambos resultados
+            const productosCombinados = {};
+
+            // Agregar productos de ventas directas
+            for (const producto of topVentas) {
+                const id = producto.producto_id;
+                productosCombinados[id] = {
+                    producto_id: id,
+                    producto_nombre: producto.producto_nombre,
+                    producto_categoria: producto.producto_categoria,
+                    total_vendido: parseFloat(producto.total_vendido) || 0,
+                    veces_vendido: parseInt(producto.veces_vendido) || 0,
+                    ingresos_generados: parseFloat(producto.ingresos_generados) || 0,
+                    precio_promedio: parseFloat(producto.precio_promedio) || 0
+                };
+            }
+
+            // Agregar productos de órdenes (compras de clientes)
+            for (const producto of topOrdenes) {
+                const id = producto.producto_id;
+
+                if (productosCombinados[id]) {
+                    // Si ya existe, sumar los valores
+                    productosCombinados[id].total_vendido += parseFloat(producto.total_vendido) || 0;
+                    productosCombinados[id].veces_vendido += parseInt(producto.veces_vendido) || 0;
+                    productosCombinados[id].ingresos_generados += parseFloat(producto.ingresos_generados) || 0;
+
+                    // Recalcular precio promedio
+                    const totalVentas = productosCombinados[id].veces_vendido;
+                    const precioVentasDirectas = parseFloat(topVentas.find(v => v.producto_id === id)?.precio_promedio) || 0;
+                    const precioOrdenes = parseFloat(producto.precio_promedio) || 0;
+                    const vecesVentasDirectas = parseInt(topVentas.find(v => v.producto_id === id)?.veces_vendido) || 0;
+                    const vecesOrdenes = parseInt(producto.veces_vendido) || 0;
+
+                    productosCombinados[id].precio_promedio =
+                        ((precioVentasDirectas * vecesVentasDirectas) + (precioOrdenes * vecesOrdenes)) / totalVentas;
+                } else {
+                    // Si no existe, agregarlo
+                    productosCombinados[id] = {
+                        producto_id: id,
+                        producto_nombre: producto.producto_nombre,
+                        producto_categoria: producto.producto_categoria,
+                        total_vendido: parseFloat(producto.total_vendido) || 0,
+                        veces_vendido: parseInt(producto.veces_vendido) || 0,
+                        ingresos_generados: parseFloat(producto.ingresos_generados) || 0,
+                        precio_promedio: parseFloat(producto.precio_promedio) || 0
+                    };
+                }
+            }
+
+            // Convertir a array y ordenar por total vendido
+            const productosArray = Object.values(productosCombinados)
+                .sort((a, b) => b.total_vendido - a.total_vendido)
+                .slice(0, limite);
+
+            res.json({
+                success: true,
+                data: productosArray,
+                count: productosArray.length,
+                nota: 'Incluye ventas directas y compras de clientes'
+            });
+
+        } catch (error) {
+            console.error('Error al obtener top productos combinado:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener top productos',
                 error: error.message
             });
         }
