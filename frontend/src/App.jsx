@@ -13,6 +13,7 @@ import Citas from './pages/Citas';
 import Trabajadores from './pages/Trabajadores';
 import Ventas from './pages/Ventas';
 import Estadisticas from './pages/Estadisticas';
+import Home from './pages/Home';
 
 function App() {
     return (
@@ -107,9 +108,11 @@ function App() {
                             }
                         />
 
+                        {/* Página de inicio */}
+                        <Route path="/" element={<Home />} />
+
                         {/* Redirección por defecto */}
-                        <Route path="/" element={<Navigate to="/login" replace />} />
-                        <Route path="*" element={<Navigate to="/login" replace />} />
+                        <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                 </Router>
             </CarritoProvider> {/* ⭐ CERRAR */}
