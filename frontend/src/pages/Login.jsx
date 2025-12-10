@@ -12,20 +12,26 @@ function Login() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+   const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-        try {
-            await login(email, password);
+    try {
+        const response = await login(email, password);
+        
+        // Redirigir según el rol
+        if (response.data.usuario.rol === 'cliente') {
+            navigate('/portal-cliente');
+        } else {
             navigate('/dashboard');
-        } catch (err) {
-            setError(err.response?.data?.message || 'Error al iniciar sesión');
-        } finally {
-            setLoading(false);
         }
-    };
+    } catch (err) {
+        setError(err.response?.data?.message || 'Error al iniciar sesión');
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <div className="login-container">
@@ -77,6 +83,9 @@ function Login() {
                     </button>
                 </form>
 
+<div className="register-link">
+    ¿No tienes cuenta? <a href="/register">Regístrate aquí</a>
+</div>
                 <div className="login-footer">
                     <p className="users-demo">Usuarios de prueba:</p>
                     <ul className="demo-users">

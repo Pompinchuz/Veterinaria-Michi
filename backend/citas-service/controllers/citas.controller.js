@@ -4,73 +4,60 @@ const ExternosService = require('../services/externos.service');
 class CitasController {
 
     // GET /api/citas
-    static async obtenerTodasCitas(req, res) {
-        try {
-            const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
-            const token = req.headers.authorization?.split(' ')[1];
+    // GET /api/citas
+static async obtenerTodasCitas(req, res) {
+    try {
+        const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
 
-            let citas;
+        let citas;
 
-            // ⭐ Si es veterinario, solo puede ver sus propias citas
-            if (req.usuario.rol === 'veterinario') {
-                // Obtener el ID del veterinario basado en su email
-                const trabajador = await ExternosService.obtenerTrabajadorPorEmail(req.usuario.email, token);
-
-                if (!trabajador) {
-                    return res.status(404).json({
-                        success: false,
-                        message: 'No se encontró información del veterinario'
-                    });
-                }
-
-                // Forzar filtro por veterinario_id del usuario actual
-                const vetIdFiltro = trabajador.id;
-
-                // Aplicar filtros adicionales si se especifican
-                if (estado) {
-                    const todasCitas = await CitaModel.obtenerPorEstado(estado);
-                    citas = todasCitas.filter(c => c.veterinario_id === vetIdFiltro);
-                } else if (fecha) {
-                    const todasCitas = await CitaModel.obtenerPorFecha(fecha);
-                    citas = todasCitas.filter(c => c.veterinario_id === vetIdFiltro);
-                } else if (mascotaId) {
-                    const todasCitas = await CitaModel.obtenerPorMascota(mascotaId);
-                    citas = todasCitas.filter(c => c.veterinario_id === vetIdFiltro);
-                } else {
-                    // Solo sus citas
-                    citas = await CitaModel.obtenerPorVeterinario(vetIdFiltro);
+        if (estado) {
+            citas = await CitaModel.obtenerPorEstado(estado);
+        } else if (fecha) {
+            citas = await CitaModel.obtenerPorFecha(fecha);
+        } else if (clienteDni) {
+            citas = await CitaModel.obtenerPorCliente(clienteDni);
+        } else if (mascotaId) {
+            citas = await CitaModel.obtenerPorMascota(mascotaId);
+        } else if (veterinarioId) {
+            citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+        } else {
+            // ⭐ Si es cliente, solo ver sus propias citas
+            if (req.usuario.rol === 'cliente') {
+                // Buscar DNI del cliente por email
+                const ClientesService = require('../services/externos.service');
+                const token = req.headers.authorization?.split(' ')[1];
+                
+                try {
+                    const cliente = await ClientesService.verificarCliente(req.usuario.email, token);
+                    if (cliente) {
+                        citas = await CitaModel.obtenerPorCliente(cliente.dni);
+                    } else {
+                        citas = [];
+                    }
+                } catch (err) {
+                    citas = [];
                 }
             } else {
-                // Admin, recepcionista, enfermera pueden ver según filtros o todas
-                if (estado) {
-                    citas = await CitaModel.obtenerPorEstado(estado);
-                } else if (fecha) {
-                    citas = await CitaModel.obtenerPorFecha(fecha);
-                } else if (clienteDni) {
-                    citas = await CitaModel.obtenerPorCliente(clienteDni);
-                } else if (mascotaId) {
-                    citas = await CitaModel.obtenerPorMascota(mascotaId);
-                } else if (veterinarioId) {
-                    citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
-                } else {
-                    citas = await CitaModel.obtenerTodas();
-                }
+                // Personal puede ver todas
+                citas = await CitaModel.obtenerTodas();
             }
-
-            res.json({
-                success: true,
-                data: citas,
-                count: citas.length
-            });
-        } catch (error) {
-            console.error('Error al obtener citas:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener citas',
-                error: error.message
-            });
         }
+
+        res.json({
+            success: true,
+            data: citas,
+            count: citas.length
+        });
+    } catch (error) {
+        console.error('Error al obtener citas:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener citas',
+            error: error.message
+        });
     }
+}
 
     // GET /api/citas/:id
     static async obtenerCitaPorId(req, res) {
