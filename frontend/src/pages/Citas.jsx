@@ -156,12 +156,18 @@ function Citas() {
         setError('');
 
         try {
-            if (modalMode === 'create') {
-                await CitasService.create(formData);
-            } else {
-                await CitasService.update(selectedCita.id, formData);
+            // ⭐ Si el usuario es veterinario, no enviar veterinario_id (se asigna automáticamente en el backend)
+            const dataToSend = { ...formData };
+            if (user?.rol === 'veterinario') {
+                delete dataToSend.veterinario_id;
             }
-            
+
+            if (modalMode === 'create') {
+                await CitasService.create(dataToSend);
+            } else {
+                await CitasService.update(selectedCita.id, dataToSend);
+            }
+
             await loadData();
             handleCloseModal();
         } catch (err) {
@@ -433,28 +439,45 @@ function Citas() {
                         </select>
                     </div>
 
-                    {/* ⭐ Select de Veterinario por Nombre */}
-                    <div className="form-group">
-                        <label htmlFor="veterinario_id">Veterinario *</label>
-                        <select
-                            id="veterinario_id"
-                            name="veterinario_id"
-                            value={formData.veterinario_id}
-                            onChange={handleInputChange}
-                            required
-                        >
-                            <option value="">Selecciona un veterinario</option>
-                            {veterinarios.map(vet => (
-                                <option key={vet.id} value={vet.id}>
-                                    {vet.nombres} {vet.apellidos}
-                                    {vet.especialidad && ` - ${vet.especialidad}`}
-                                </option>
-                            ))}
-                        </select>
-                        <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                            Selecciona el veterinario que atenderá la cita
-                        </small>
-                    </div>
+                    {/* ⭐ Select de Veterinario - Solo visible para admin y otro personal */}
+                    {user?.rol !== 'veterinario' && (
+                        <div className="form-group">
+                            <label htmlFor="veterinario_id">Veterinario *</label>
+                            <select
+                                id="veterinario_id"
+                                name="veterinario_id"
+                                value={formData.veterinario_id}
+                                onChange={handleInputChange}
+                                required
+                            >
+                                <option value="">Selecciona un veterinario</option>
+                                {veterinarios.map(vet => (
+                                    <option key={vet.id} value={vet.id}>
+                                        {vet.nombres} {vet.apellidos}
+                                        {vet.especialidad && ` - ${vet.especialidad}`}
+                                    </option>
+                                ))}
+                            </select>
+                            <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                Selecciona el veterinario que atenderá la cita
+                            </small>
+                        </div>
+                    )}
+
+                    {/* ⭐ Mensaje informativo para veterinarios */}
+                    {user?.rol === 'veterinario' && (
+                        <div className="form-group">
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#E3F2FD',
+                                borderRadius: '8px',
+                                border: '1px solid #2196F3',
+                                color: '#1565C0'
+                            }}>
+                                <strong>ℹ️ Información:</strong> Esta cita será asignada automáticamente a ti.
+                            </div>
+                        </div>
+                    )}
 
                     <div className="form-row">
                         {/* ⭐ Fecha con restricciones */}

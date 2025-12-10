@@ -132,17 +132,39 @@ class CitasController {
     // POST /api/citas
     static async crearCita(req, res) {
         try {
-            const { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
+            let { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
             const token = req.headers.authorization?.split(' ')[1];
 
-            console.log('➕ Creando cita para cliente:', cliente_dni);
-            console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
+            console.log('➕ Creando cita - Usuario:', req.usuario.email, 'Rol:', req.usuario.rol);
+
+            // ⭐ Si es veterinario, asignar automáticamente su propio ID
+            if (req.usuario.rol === 'veterinario') {
+                try {
+                    const veterinarioActual = await ExternosService.buscarVeterinarioPorEmail(req.usuario.email, token);
+                    if (!veterinarioActual) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'No se pudo encontrar el perfil del veterinario'
+                        });
+                    }
+
+                    // Forzar el ID del veterinario autenticado
+                    veterinario_id = veterinarioActual.id;
+                    console.log(`✅ Veterinario asignado automáticamente: ${veterinario_id}`);
+                } catch (error) {
+                    console.error('❌ Error al obtener veterinario:', error);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error al obtener información del veterinario'
+                    });
+                }
+            }
 
             // Validaciones básicas
             if (!cliente_dni || !mascota_id || !veterinario_id || !fecha || !hora || !motivo) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Todos los campos son obligatorios: cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo'
+                    message: 'Todos los campos son obligatorios: cliente_dni, mascota_id, fecha, hora, motivo'
                 });
             }
 
@@ -188,8 +210,18 @@ class CitasController {
                 });
             }
 
-            // Crear la cita
-            const citaId = await CitaModel.crear(req.body);
+            // Crear la cita con el veterinario_id correcto
+            const datosCita = {
+                cliente_dni,
+                mascota_id,
+                veterinario_id,
+                fecha,
+                hora,
+                motivo,
+                observaciones: req.body.observaciones
+            };
+
+            const citaId = await CitaModel.crear(datosCita);
             const nuevaCita = await CitaModel.obtenerPorId(citaId);
 
             res.status(201).json({
