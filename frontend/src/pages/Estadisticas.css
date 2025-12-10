@@ -1,0 +1,303 @@
+.estadisticas-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Loading Screen */
+.loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Selector de Período */
+.periodo-selector {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.periodo-selector label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #333;
+}
+
+.periodo-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.periodo-buttons button {
+    padding: 10px 20px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.periodo-buttons button:hover {
+    background: #f8f9fa;
+    border-color: #3498db;
+}
+
+.periodo-buttons button.active {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+/* Tarjetas de Estadísticas */
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 25px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-card:nth-child(2) {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-card:nth-child(3) {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-card:nth-child(4) {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-icon {
+    font-size: 48px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.stat-content {
+    color: white;
+}
+
+.stat-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.stat-value {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+/* Secciones de Gráficos */
+.chart-section {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.chart-section h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.chart-container {
+    width: 100%;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-data {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 40px;
+}
+
+/* Insights del Gráfico */
+.chart-insights {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.chart-insights p {
+    margin: 8px 0;
+    color: #555;
+}
+
+.chart-insights strong {
+    color: #333;
+}
+
+/* Grid de Gráficos */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+/* Top Productos */
+.top-productos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.producto-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.producto-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.producto-rank {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.producto-emoji {
+    font-size: 32px;
+}
+
+.producto-info {
+    flex: 1;
+}
+
+.producto-info strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.producto-info p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .periodo-buttons {
+        flex-direction: column;
+    }
+
+    .periodo-buttons button {
+        width: 100%;
+    }
+}
+
+/* Personalización de Recharts */
+.recharts-tooltip-wrapper {
+    z-index: 1000;
+}
+
+.recharts-default-tooltip {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+}
+
+.recharts-tooltip-label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.recharts-tooltip-item {
+    color: #666 !important;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chart-section {
+    animation: fadeIn 0.5s ease-out;
+}
+
+.stat-card {
+    animation: fadeIn 0.5s ease-out;
+}

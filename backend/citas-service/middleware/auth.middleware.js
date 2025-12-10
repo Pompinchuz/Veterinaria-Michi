@@ -75,46 +75,29 @@ class AuthMiddleware {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista'])(req, res, next);
     }
 
-    // Verificar que es personal O cliente (para operaciones específicas)
+    // Verificar que es personal O cliente (para operaciones donde el cliente puede ver sus propios recursos)
     static esPersonalOCliente(req, res, next) {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista', 'cliente'])(req, res, next);
     }
 
-    // Verificar que el cliente solo accede a sus propios datos
+    // Verificar que el cliente solo accede a sus propios recursos
+    // NOTA: Este middleware permite el acceso, pero el controlador debe validar
+    // que el cliente solo accede a sus propios datos consultando la BD
     static verificarAccesoCliente(req, res, next) {
-        if (!req.usuario) {
-            return res.status(401).json({
-                success: false,
-                message: 'No autenticado'
-            });
-        }
+        const usuario = req.usuario;
 
-        console.log('🔍 Usuario solicitando citas:', {
-            email: req.usuario.email,
-            rol: req.usuario.rol,
-            queryParams: req.query
-        });
-
-        // Si es personal, puede acceder a todo
-        if (['admin', 'veterinario', 'enfermera', 'recepcionista'].includes(req.usuario.rol)) {
+        // Si es personal, tiene acceso completo
+        if (['admin', 'veterinario', 'enfermera', 'recepcionista'].includes(usuario.rol)) {
             return next();
         }
 
-        // Si es cliente, solo puede acceder a sus propias citas
-        if (req.usuario.rol === 'cliente') {
-            // Para GET /api/citas - debe filtrar por su DNI
-            if (req.method === 'GET' && !req.params.id) {
-                // Forzar que solo vea sus propias citas
-                req.query.clienteDni = req.usuario.dni;
-            }
-
-            // Para GET /api/citas/:id - verificaremos en el controlador
-            // Para POST /api/citas - verificaremos en el controlador que el DNI coincida
-
+        // Si es cliente, marcar en el request que es un cliente
+        // El controlador se encargará de filtrar solo sus datos
+        if (usuario.rol === 'cliente') {
+            req.esCliente = true;
             return next();
         }
 
-        // Cualquier otro rol no tiene acceso
         return res.status(403).json({
             success: false,
             message: 'No tienes permisos para acceder a este recurso'

@@ -4,12 +4,14 @@ import { useAuth } from '../context/AuthContext';
 import CitasService from '../services/citas.service';
 import ClientesService from '../services/clientes.service';
 import MascotasService from '../services/mascotas.service';
+import TrabajadoresService from '../services/trabajadores.service';
 import Modal from '../components/Modal';
 import './Citas.css';
 
 function Citas() {
     const [citas, setCitas] = useState([]);
     const [clientes, setClientes] = useState([]);
+    const [veterinarios, setVeterinarios] = useState([]);
     const [mascotas, setMascotas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -46,13 +48,16 @@ function Citas() {
             const params = {};
             if (estadoFiltro) params.estado = estadoFiltro;
             
-            const [citasResponse, clientesResponse] = await Promise.all([
+            const [citasResponse, clientesResponse, veterinariosResponse] = await Promise.all([
                 CitasService.getAll(params),
-                ClientesService.getAll()
+                ClientesService.getAll(),
+                TrabajadoresService.getVeterinarios()
             ]);
             
             setCitas(citasResponse.data);
             setClientes(clientesResponse.data);
+            setVeterinarios(veterinariosResponse.data);
+            
             setError('');
         } catch (err) {
             setError('Error al cargar datos');
@@ -70,6 +75,19 @@ function Citas() {
             console.error('Error al cargar mascotas:', err);
             setMascotas([]);
         }
+    };
+
+    // ⭐ Obtener fecha mínima (hoy)
+    const getMinDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+
+    // ⭐ Obtener fecha máxima (3 meses adelante)
+    const getMaxDate = () => {
+        const today = new Date();
+        const maxDate = new Date(today.setMonth(today.getMonth() + 3));
+        return maxDate.toISOString().split('T')[0];
     };
 
     const handleOpenModal = (mode, cita = null) => {
@@ -138,12 +156,18 @@ function Citas() {
         setError('');
 
         try {
-            if (modalMode === 'create') {
-                await CitasService.create(formData);
-            } else {
-                await CitasService.update(selectedCita.id, formData);
+            // ⭐ Si el usuario es veterinario, no enviar veterinario_id (se asigna automáticamente en el backend)
+            const dataToSend = { ...formData };
+            if (user?.rol === 'veterinario') {
+                delete dataToSend.veterinario_id;
             }
-            
+
+            if (modalMode === 'create') {
+                await CitasService.create(dataToSend);
+            } else {
+                await CitasService.update(selectedCita.id, dataToSend);
+            }
+
             await loadData();
             handleCloseModal();
         } catch (err) {
@@ -181,6 +205,11 @@ function Citas() {
     const getClienteNombre = (dni) => {
         const cliente = clientes.find(c => c.dni === dni);
         return cliente ? `${cliente.nombres} ${cliente.apellidos}` : dni;
+    };
+
+    const getVeterinarioNombre = (id) => {
+        const vet = veterinarios.find(v => v.id === parseInt(id));
+        return vet ? `${vet.nombres} ${vet.apellidos}` : `ID: ${id}`;
     };
 
     const getEstadoBadge = (estado) => {
@@ -271,6 +300,7 @@ function Citas() {
                                     <th>Fecha</th>
                                     <th>Hora</th>
                                     <th>Cliente</th>
+                                    <th>Veterinario</th>
                                     <th>Motivo</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
@@ -279,7 +309,7 @@ function Citas() {
                             <tbody>
                                 {citas.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" style={{ textAlign: 'center', padding: '40px' }}>
+                                        <td colSpan="7" style={{ textAlign: 'center', padding: '40px' }}>
                                             No se encontraron citas
                                         </td>
                                     </tr>
@@ -289,6 +319,7 @@ function Citas() {
                                             <td>{formatFecha(cita.fecha)}</td>
                                             <td>{cita.hora}</td>
                                             <td>{getClienteNombre(cita.cliente_dni)}</td>
+                                            <td>{getVeterinarioNombre(cita.veterinario_id)}</td>
                                             <td>{cita.motivo}</td>
                                             <td>{getEstadoBadge(cita.estado)}</td>
                                             <td>
@@ -408,21 +439,48 @@ function Citas() {
                         </select>
                     </div>
 
-                    <div className="form-group">
-                        <label htmlFor="veterinario_id">Veterinario ID *</label>
-                        <input
-                            type="number"
-                            id="veterinario_id"
-                            name="veterinario_id"
-                            value={formData.veterinario_id}
-                            onChange={handleInputChange}
-                            required
-                            placeholder="ID del veterinario (ej: 1)"
-                        />
-                        <small>Ingresa el ID del veterinario que atenderá</small>
-                    </div>
+                    {/* ⭐ Select de Veterinario - Solo visible para admin y otro personal */}
+                    {user?.rol !== 'veterinario' && (
+                        <div className="form-group">
+                            <label htmlFor="veterinario_id">Veterinario *</label>
+                            <select
+                                id="veterinario_id"
+                                name="veterinario_id"
+                                value={formData.veterinario_id}
+                                onChange={handleInputChange}
+                                required
+                            >
+                                <option value="">Selecciona un veterinario</option>
+                                {veterinarios.map(vet => (
+                                    <option key={vet.id} value={vet.id}>
+                                        {vet.nombres} {vet.apellidos}
+                                        {vet.especialidad && ` - ${vet.especialidad}`}
+                                    </option>
+                                ))}
+                            </select>
+                            <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                Selecciona el veterinario que atenderá la cita
+                            </small>
+                        </div>
+                    )}
+
+                    {/* ⭐ Mensaje informativo para veterinarios */}
+                    {user?.rol === 'veterinario' && (
+                        <div className="form-group">
+                            <div style={{
+                                padding: '12px',
+                                backgroundColor: '#E3F2FD',
+                                borderRadius: '8px',
+                                border: '1px solid #2196F3',
+                                color: '#1565C0'
+                            }}>
+                                <strong>ℹ️ Información:</strong> Esta cita será asignada automáticamente a ti.
+                            </div>
+                        </div>
+                    )}
 
                     <div className="form-row">
+                        {/* ⭐ Fecha con restricciones */}
                         <div className="form-group">
                             <label htmlFor="fecha">Fecha *</label>
                             <input
@@ -432,10 +490,15 @@ function Citas() {
                                 value={formData.fecha}
                                 onChange={handleInputChange}
                                 required
-                                min={new Date().toISOString().split('T')[0]}
+                                min={getMinDate()}
+                                max={getMaxDate()}
                             />
+                            <small style={{ color: '#666', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                                Desde hoy hasta 3 meses adelante
+                            </small>
                         </div>
 
+                        {/* ⭐ Hora con restricciones (8 AM - 6 PM) */}
                         <div className="form-group">
                             <label htmlFor="hora">Hora *</label>
                             <input
@@ -445,7 +508,13 @@ function Citas() {
                                 value={formData.hora}
                                 onChange={handleInputChange}
                                 required
+                                min="08:00"
+                                max="18:00"
+                                step="1800"
                             />
+                            <small style={{ color: '#666', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                                Horario: 8:00 AM - 6:00 PM (intervalos de 30 min)
+                            </small>
                         </div>
                     </div>
 

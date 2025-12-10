@@ -7,37 +7,79 @@ class CitasController {
     static async obtenerTodasCitas(req, res) {
         try {
             const { estado, fecha, clienteDni, mascotaId, veterinarioId } = req.query;
+            const token = req.headers.authorization?.split(' ')[1];
+
+            console.log('🔍 Usuario solicitando citas:', {
+                email: req.usuario.email,
+                rol: req.usuario.rol,
+                queryParams: req.query
+            });
 
             let citas;
 
-            if (estado) {
-                citas = await CitaModel.obtenerPorEstado(estado);
-            } else if (fecha) {
-                citas = await CitaModel.obtenerPorFecha(fecha);
-            } else if (clienteDni) {
-                citas = await CitaModel.obtenerPorCliente(clienteDni);
-            } else if (mascotaId) {
-                citas = await CitaModel.obtenerPorMascota(mascotaId);
-            } else if (veterinarioId) {
-                citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
-            } else {
-                citas = await CitaModel.obtenerTodas();
+            // ⭐ IMPORTANTE: Los veterinarios solo pueden ver sus propias citas
+            if (req.usuario.rol === 'veterinario') {
+                try {
+                    const veterinario = await ExternosService.buscarVeterinarioPorEmail(req.usuario.email, token);
+                    console.log('🔍 Veterinario encontrado:', veterinario);
+
+                    if (veterinario) {
+                        // Forzar el filtrado por veterinario, ignorando otros parámetros
+                        citas = await CitaModel.obtenerPorVeterinario(veterinario.id);
+                        console.log(`✅ Citas filtradas para veterinario ${veterinario.id}: ${citas.length} citas`);
+                    } else {
+                        console.log('❌ No se encontró veterinario con email:', req.usuario.email);
+                        citas = [];
+                    }
+                } catch (err) {
+                    console.error('❌ Error al buscar veterinario:', err);
+                    citas = [];
+                }
+            }
+            // ⭐ Los clientes solo pueden ver sus propias citas
+            else if (req.usuario.rol === 'cliente') {
+                try {
+                    const cliente = await ExternosService.verificarCliente(req.usuario.email, token);
+                    if (cliente) {
+                        citas = await CitaModel.obtenerPorCliente(cliente.dni);
+                    } else {
+                        citas = [];
+                    }
+                } catch (err) {
+                    citas = [];
+                }
+            }
+            // ⭐ Admin y otro personal pueden filtrar por diferentes criterios
+            else {
+                if (estado) {
+                    citas = await CitaModel.obtenerPorEstado(estado);
+                } else if (fecha) {
+                    citas = await CitaModel.obtenerPorFecha(fecha);
+                } else if (clienteDni) {
+                    citas = await CitaModel.obtenerPorCliente(clienteDni);
+                } else if (mascotaId) {
+                    citas = await CitaModel.obtenerPorMascota(mascotaId);
+                } else if (veterinarioId) {
+                    citas = await CitaModel.obtenerPorVeterinario(veterinarioId);
+                } else {
+                    citas = await CitaModel.obtenerTodas();
+                }
             }
 
-            res.json({
-                success: true,
-                data: citas,
-                count: citas.length
-            });
-        } catch (error) {
-            console.error('Error al obtener citas:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error al obtener citas',
-                error: error.message
-            });
-        }
+        res.json({
+            success: true,
+            data: citas,
+            count: citas.length
+        });
+    } catch (error) {
+        console.error('Error al obtener citas:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener citas',
+            error: error.message
+        });
     }
+}
 
     // GET /api/citas/:id
     static async obtenerCitaPorId(req, res) {
@@ -45,6 +87,7 @@ class CitasController {
             const { id } = req.params;
             const { incluirDetalles } = req.query;
             const token = req.headers.authorization?.split(' ')[1];
+            const usuario = req.usuario;
 
             const cita = await CitaModel.obtenerPorId(id);
 
@@ -56,11 +99,14 @@ class CitasController {
             }
 
             // Si es cliente, verificar que la cita le pertenece
-            if (req.usuario.rol === 'cliente' && cita.cliente_dni !== req.usuario.dni) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tienes permisos para acceder a esta cita'
-                });
+            if (usuario.rol === 'cliente') {
+                const dniUsuario = usuario.email || usuario.dni;
+                if (cita.cliente_dni !== dniUsuario) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'No tienes permisos para ver esta cita'
+                    });
+                }
             }
 
             // Si se solicitan detalles, obtener información de otros servicios
@@ -98,28 +144,56 @@ class CitasController {
     // POST /api/citas
     static async crearCita(req, res) {
         try {
-            const { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
+            let { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo } = req.body;
             const token = req.headers.authorization?.split(' ')[1];
+            const usuario = req.usuario;
 
-            console.log('➕ Creando cita para cliente:', cliente_dni);
-            console.log('🔑 Token presente:', token ? 'SÍ' : 'NO');
-            console.log('👤 Usuario que crea:', req.usuario.rol, req.usuario.dni);
+            console.log('➕ Creando cita - Usuario:', req.usuario.email, 'Rol:', req.usuario.rol);
+            console.log('📦 Datos recibidos:', { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo });
+
+            // ⭐ Si es veterinario, asignar automáticamente su propio ID
+            let veterinarioValidado = null; // Guardar veterinario ya validado
+            if (req.usuario.rol === 'veterinario') {
+                try {
+                    console.log('🔍 Buscando veterinario con email:', req.usuario.email);
+                    const veterinarioActual = await ExternosService.buscarVeterinarioPorEmail(req.usuario.email, token);
+                    console.log('📋 Veterinario encontrado:', veterinarioActual);
+
+                    if (!veterinarioActual) {
+                        console.error('❌ No se encontró veterinario con email:', req.usuario.email);
+                        return res.status(400).json({
+                            success: false,
+                            message: 'No se pudo encontrar el perfil del veterinario'
+                        });
+                    }
+
+                    // Forzar el ID del veterinario autenticado
+                    veterinario_id = veterinarioActual.id;
+                    veterinarioValidado = veterinarioActual; // Ya está validado
+                    console.log(`✅ Veterinario asignado automáticamente: ${veterinario_id}`);
+                } catch (error) {
+                    console.error('❌ Error al obtener veterinario:', error);
+                    console.error('❌ Stack:', error.stack);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Error al obtener información del veterinario',
+                        error: error.message
+                    });
+                }
+            }
+
+            console.log('✔️ Validando campos obligatorios...');
+            console.log('Valores:', { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo });
 
             // Validaciones básicas
             if (!cliente_dni || !mascota_id || !veterinario_id || !fecha || !hora || !motivo) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Todos los campos son obligatorios: cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo'
+                    message: 'Todos los campos son obligatorios: cliente_dni, mascota_id, fecha, hora, motivo'
                 });
             }
 
-            // Si es cliente, solo puede crear citas para sí mismo
-            if (req.usuario.rol === 'cliente' && cliente_dni !== req.usuario.dni) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Solo puedes crear citas para ti mismo'
-                });
-            }
+            console.log('✅ Validación de campos completada');
 
             // Verificar que el cliente existe
             const cliente = await ExternosService.verificarCliente(cliente_dni, token);
@@ -139,19 +213,25 @@ class CitasController {
                 });
             }
 
-            // Verificar que el veterinario existe y es veterinario
-            const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
-            if (!veterinario) {
-                return res.status(404).json({
-                    success: false,
-                    message: `No se encontró veterinario con ID: ${veterinario_id}`
-                });
-            }
-            if (veterinario.error) {
-                return res.status(400).json({
-                    success: false,
-                    message: veterinario.error
-                });
+            // ⭐ Solo verificar veterinario si NO fue asignado automáticamente
+            if (!veterinarioValidado) {
+                console.log('🔍 Verificando veterinario con ID:', veterinario_id);
+                const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
+                if (!veterinario) {
+                    return res.status(404).json({
+                        success: false,
+                        message: `No se encontró veterinario con ID: ${veterinario_id}`
+                    });
+                }
+                if (veterinario.error) {
+                    return res.status(400).json({
+                        success: false,
+                        message: veterinario.error
+                    });
+                }
+                veterinarioValidado = veterinario;
+            } else {
+                console.log('✅ Veterinario ya validado, omitiendo verificación adicional');
             }
 
             // Verificar disponibilidad del veterinario en esa fecha/hora
@@ -163,9 +243,23 @@ class CitasController {
                 });
             }
 
-            // Crear la cita
-            const citaId = await CitaModel.crear(req.body);
+            // Crear la cita con el veterinario_id correcto
+            const datosCita = {
+                cliente_dni,
+                mascota_id,
+                veterinario_id,
+                fecha,
+                hora,
+                motivo,
+                observaciones: req.body.observaciones
+            };
+
+            console.log('💾 Creando cita con datos:', datosCita);
+
+            const citaId = await CitaModel.crear(datosCita);
             const nuevaCita = await CitaModel.obtenerPorId(citaId);
+
+            console.log('✅ Cita creada exitosamente con ID:', citaId);
 
             res.status(201).json({
                 success: true,
@@ -175,6 +269,7 @@ class CitasController {
         } catch (error) {
             console.error('❌ Error al crear cita:', error);
             console.error('❌ Error completo:', error.response?.data || error.message);
+            console.error('❌ Stack:', error.stack);
             res.status(500).json({
                 success: false,
                 message: 'Error al crear cita',

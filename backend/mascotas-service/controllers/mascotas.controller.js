@@ -4,25 +4,38 @@ const ExternosService = require('../services/externos.service');
 class MascotasController {
 
     // GET /api/mascotas
-    static async obtenerTodasMascotas(req, res) {
-        try {
-            const mascotas = await Mascota.find({ activo: true })
-                .sort({ createdAt: -1 });
-
-            res.json({
-                success: true,
-                data: mascotas,
-                count: mascotas.length
-            });
-        } catch (error) {
-            console.error('Error al obtener mascotas:', error);
-            res.status(500).json({
+    // GET /api/mascotas
+static async obtenerTodasMascotas(req, res) {
+    try {
+        let query = { activo: true };
+        
+        // ⭐ Si es cliente, solo mostrar sus propias mascotas
+        if (req.usuario.rol === 'cliente') {
+            // Necesitamos obtener el DNI del cliente por su email
+            // Por ahora, el cliente NO debería llamar a este endpoint
+            // Debería usar /api/mascotas/cliente/:dni directamente
+            return res.status(403).json({
                 success: false,
-                message: 'Error al obtener mascotas',
-                error: error.message
+                message: 'Los clientes deben usar el endpoint /api/mascotas/cliente/:dni'
             });
         }
+
+        const mascotas = await Mascota.find(query).sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            data: mascotas,
+            count: mascotas.length
+        });
+    } catch (error) {
+        console.error('Error al obtener mascotas:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener mascotas',
+            error: error.message
+        });
     }
+}
 
     // GET /api/mascotas/:id
     static async obtenerMascotaPorId(req, res) {

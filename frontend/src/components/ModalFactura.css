@@ -1,0 +1,432 @@
+/* Modal de Factura - Overlay */
+.modal-factura-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Contenedor del Modal */
+.modal-factura-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s ease;
+    position: relative;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Encabezado del Modal */
+.modal-factura-header {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 30px 20px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-factura-header h2 {
+    color: white;
+    margin: 15px 0 5px 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.modal-factura-header .subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-size: 16px;
+}
+
+/* Animación de Success */
+.success-animation {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.checkmark-circle {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.checkmark {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: block;
+    stroke-width: 3;
+    stroke: #4CAF50;
+    stroke-miterlimit: 10;
+    animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+}
+
+.checkmark-circle-path {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    stroke-width: 3;
+    stroke-miterlimit: 10;
+    stroke: #4CAF50;
+    fill: rgba(76, 175, 80, 0.2);
+    animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkmark-check {
+    transform-origin: 50% 50%;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes scale {
+    0%, 100% {
+        transform: none;
+    }
+    50% {
+        transform: scale3d(1.1, 1.1, 1);
+    }
+}
+
+@keyframes fill {
+    100% {
+        box-shadow: inset 0px 0px 0px 30px #4CAF50;
+    }
+}
+
+/* Contenido del Modal */
+.modal-factura-content {
+    padding: 30px 20px;
+}
+
+/* Tarjeta de Factura */
+.factura-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Sección de Número de Factura */
+.factura-numero-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.factura-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.factura-numero {
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+/* Grid de Información */
+.factura-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #666;
+    font-weight: 600;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
+}
+
+/* Sección de Cliente */
+.factura-cliente-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.factura-cliente-section h3 {
+    margin: 0 0 10px 0;
+    color: #667eea;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.factura-cliente-section p {
+    margin: 5px 0;
+    color: #555;
+    font-size: 14px;
+}
+
+/* Sección de Productos */
+.factura-productos-section {
+    margin-bottom: 20px;
+}
+
+.factura-productos-section h3 {
+    margin: 0 0 15px 0;
+    color: #667eea;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.productos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.producto-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.producto-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.producto-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.producto-nombre {
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.producto-cantidad {
+    color: #666;
+    font-size: 12px;
+}
+
+.producto-precio {
+    color: #667eea;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+/* Totales */
+.factura-totales {
+    border-top: 2px solid #e9ecef;
+    padding-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #555;
+}
+
+.total-row.total-final {
+    font-size: 20px;
+    font-weight: 700;
+    color: #333;
+    padding-top: 10px;
+    border-top: 2px solid #667eea;
+    margin-top: 5px;
+}
+
+.total-row.total-final span:last-child {
+    color: #667eea;
+}
+
+/* Footer del Modal */
+.modal-factura-footer {
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.btn-descargar-factura {
+    flex: 1;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-descargar-factura:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.btn-descargar-factura:active {
+    transform: translateY(0);
+}
+
+.btn-cerrar-factura {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 15px 30px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.btn-cerrar-factura:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Botón de cerrar (X) */
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-factura-container {
+        margin: 10px;
+        max-height: 95vh;
+    }
+
+    .modal-factura-header h2 {
+        font-size: 24px;
+    }
+
+    .factura-numero {
+        font-size: 20px;
+    }
+
+    .factura-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-factura-footer {
+        flex-direction: column;
+    }
+
+    .btn-descargar-factura,
+    .btn-cerrar-factura {
+        width: 100%;
+    }
+}
+
+/* Scrollbar personalizado */
+.modal-factura-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-factura-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.modal-factura-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.modal-factura-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
