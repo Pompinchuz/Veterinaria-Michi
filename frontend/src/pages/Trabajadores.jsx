@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthService from '../services/auth.service';
 import TrabajadoresService from '../services/trabajadores.service';
 import Modal from '../components/Modal';
 import './Trabajadores.css';
@@ -29,6 +30,7 @@ function Trabajadores() {
         especialidad: '',
         telefono: '',
         email: '',
+        password: '',
         direccion: '',
         fecha_ingreso: '',
         salario: ''
@@ -100,6 +102,7 @@ function Trabajadores() {
                 especialidad: '',
                 telefono: '',
                 email: '',
+                password: '',
                 direccion: '',
                 fecha_ingreso: '',
                 salario: ''
@@ -159,11 +162,16 @@ function Trabajadores() {
             };
 
             if (modalMode === 'create') {
-                await TrabajadoresService.create(dataToSend);
+                // Backend ahora maneja tanto la creación del trabajador como del usuario
+                const response = await TrabajadoresService.create(dataToSend);
+
+                alert(`✅ Empleado y cuenta de usuario creados exitosamente.\n\n📧 Email: ${formData.email}\n🔑 Contraseña: ${formData.password}\n\n⚠️ Se recomienda cambiar la contraseña en el primer inicio de sesión.`);
             } else {
-                await TrabajadoresService.update(selectedTrabajador.id, dataToSend);
+                // Al editar, no incluir password
+                const { password, ...dataToUpdate } = dataToSend;
+                await TrabajadoresService.update(selectedTrabajador.id, dataToUpdate);
             }
-            
+
             await loadTrabajadores();
             handleCloseModal();
         } catch (err) {
@@ -497,17 +505,43 @@ function Trabajadores() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="email">Email</label>
+                            <label htmlFor="email">Email *</label>
                             <input
                                 type="email"
                                 id="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleInputChange}
+                                required={modalMode === 'create'}
+                                disabled={modalMode === 'edit'}
                                 placeholder="trabajador@vetclinic.com"
                             />
+                            {modalMode === 'create' && (
+                                <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                    Se creará una cuenta de usuario con este email
+                                </small>
+                            )}
                         </div>
                     </div>
+
+                    {modalMode === 'create' && (
+                        <div className="form-group">
+                            <label htmlFor="password">Contraseña *</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleInputChange}
+                                required
+                                minLength="6"
+                                placeholder="Mínimo 6 caracteres"
+                            />
+                            <small style={{ color: '#666', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                                Esta contraseña será usada por el empleado para iniciar sesión en el sistema
+                            </small>
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label htmlFor="direccion">Dirección</label>

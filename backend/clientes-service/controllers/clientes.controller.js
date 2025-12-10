@@ -1,4 +1,5 @@
 const ClienteModel = require('../models/cliente.model');
+const db = require('../config/database');
 
 class ClientesController {
 
@@ -16,6 +17,36 @@ class ClientesController {
             res.status(500).json({
                 success: false,
                 message: 'Error al obtener clientes',
+                error: error.message
+            });
+        }
+    }
+
+    // ⭐ NUEVO: GET /api/clientes/mi-perfil
+    static async getMiPerfil(req, res) {
+        try {
+            // Buscar cliente por email del token
+            const [cliente] = await db.query(
+                'SELECT * FROM clientes WHERE email = ? AND activo = TRUE',
+                [req.usuario.email]
+            );
+
+            if (cliente.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'No se encontró tu perfil de cliente. Por favor, completa tu registro.'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: cliente[0]
+            });
+        } catch (error) {
+            console.error('Error al obtener perfil:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener tu perfil',
                 error: error.message
             });
         }
@@ -80,7 +111,7 @@ class ClientesController {
         try {
             const { dni, nombres, apellidos, telefono, email, direccion } = req.body;
 
-            // Validaciones básicas
+            // Validar campos obligatorios
             if (!dni || !nombres || !apellidos) {
                 return res.status(400).json({
                     success: false,
@@ -88,23 +119,47 @@ class ClientesController {
                 });
             }
 
-            // Verificar si el DNI ya existe
-            const clienteExistente = await ClienteModel.getByDni(dni);
-            if (clienteExistente) {
+            // ⭐ Si es un cliente creando su propio perfil, validar que el email coincida
+            if (req.usuario.rol === 'cliente') {
+                if (email !== req.usuario.email) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Solo puedes crear un perfil con tu propio email'
+                    });
+                }
+            }
+
+            // Verificar si ya existe cliente con ese DNI
+            const [clienteExistente] = await db.query(
+                'SELECT * FROM clientes WHERE dni = ?',
+                [dni]
+            );
+
+            if (clienteExistente.length > 0) {
                 return res.status(409).json({
                     success: false,
-                    message: `Ya existe un cliente con DNI: ${dni}`
+                    message: 'Ya existe un cliente con ese DNI'
                 });
             }
 
-            const clienteId = await ClienteModel.create(req.body);
-            const nuevoCliente = await ClienteModel.getById(clienteId);
+            // Crear el cliente
+            const [resultado] = await db.query(
+                'INSERT INTO clientes (dni, nombres, apellidos, telefono, email, direccion) VALUES (?, ?, ?, ?, ?, ?)',
+                [dni, nombres, apellidos, telefono || null, email || null, direccion || null]
+            );
+
+            // Obtener el cliente creado
+            const [nuevoCliente] = await db.query(
+                'SELECT * FROM clientes WHERE id = ?',
+                [resultado.insertId]
+            );
 
             res.status(201).json({
                 success: true,
                 message: 'Cliente creado exitosamente',
-                data: nuevoCliente
+                data: nuevoCliente[0]
             });
+
         } catch (error) {
             console.error('Error al crear cliente:', error);
             res.status(500).json({

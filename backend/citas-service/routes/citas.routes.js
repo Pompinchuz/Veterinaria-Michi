@@ -12,22 +12,18 @@ router.get('/estadisticas/resumen',
     CitasController.obtenerEstadisticas
 );
 
-// Rutas principales - Personal y Clientes pueden ver/crear citas
-// Los clientes solo pueden acceder a sus propias citas
-router.get('/',
-    AuthMiddleware.esPersonalOCliente,
-    AuthMiddleware.verificarAccesoCliente,
+// ⭐ Rutas principales - Cliente puede ver con filtro, Personal puede ver todo
+router.get('/', 
     CitasController.obtenerTodasCitas
 );
 
-router.get('/:id',
-    AuthMiddleware.esPersonalOCliente,
+router.get('/:id', 
     CitasController.obtenerCitaPorId
 );
 
-router.post('/',
-    AuthMiddleware.esPersonalOCliente,
-    AuthMiddleware.verificarAccesoCliente,
+// Solo personal puede crear/modificar citas
+router.post('/', 
+    AuthMiddleware.esPersonal,
     CitasController.crearCita
 );
 
