@@ -7,9 +7,7 @@ class TrabajadoresService {
     }
 
     async getVeterinarios() {
-        const response = await trabajadoresApi.get('/trabajadores', {
-            params: { cargo: 'veterinario' }
-        });
+        const response = await trabajadoresApi.get('/trabajadores/veterinarios');
         return response.data;
     }
 

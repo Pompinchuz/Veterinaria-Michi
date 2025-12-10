@@ -6,6 +6,12 @@ const AuthMiddleware = require('../middleware/auth.middleware');
 // Aplicar autenticación a todas las rutas
 router.use(AuthMiddleware.verificarToken);
 
+// Ruta para obtener veterinarios - Accesible por todo el personal
+router.get('/veterinarios',
+    AuthMiddleware.esPersonal,
+    TrabajadoresController.obtenerVeterinarios
+);
+
 // Rutas principales - Solo admin puede gestionar trabajadores
 router.get('/', 
     AuthMiddleware.esAdmin,
