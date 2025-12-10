@@ -53,18 +53,46 @@ class ExternosService {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             const trabajador = respuesta.data.data;
-            
+
             // Verificar que es veterinario
             if (trabajador.cargo !== 'veterinario') {
                 console.error('❌ El trabajador no es veterinario, cargo:', trabajador.cargo);
                 return { error: 'El trabajador no es veterinario' };
             }
-            
+
             return trabajador;
         } catch (error) {
             console.error('❌ Error al verificar veterinario:', error.response?.data || error.message);
+            if (error.response && error.response.status === 404) {
+                return null;
+            }
+            throw new Error('Error al comunicarse con el servicio de trabajadores');
+        }
+    }
+
+    // Buscar veterinario por email
+    static async buscarVeterinarioPorEmail(email, token) {
+        try {
+            console.log('🔍 Buscando veterinario por email:', email);
+            const respuesta = await axios.get(`${TRABAJADORES_SERVICE_URL}/api/trabajadores/email/${email}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const trabajador = respuesta.data.data;
+
+            // Verificar que es veterinario
+            if (trabajador && trabajador.cargo !== 'veterinario') {
+                console.error('❌ El trabajador no es veterinario, cargo:', trabajador.cargo);
+                return null;
+            }
+
+            return trabajador;
+        } catch (error) {
+            console.error('❌ Error al buscar veterinario por email:', error.response?.data || error.message);
             if (error.response && error.response.status === 404) {
                 return null;
             }
