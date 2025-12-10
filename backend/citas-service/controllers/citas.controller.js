@@ -136,12 +136,17 @@ class CitasController {
             const token = req.headers.authorization?.split(' ')[1];
 
             console.log('➕ Creando cita - Usuario:', req.usuario.email, 'Rol:', req.usuario.rol);
+            console.log('📦 Datos recibidos:', { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo });
 
             // ⭐ Si es veterinario, asignar automáticamente su propio ID
             if (req.usuario.rol === 'veterinario') {
                 try {
+                    console.log('🔍 Buscando veterinario con email:', req.usuario.email);
                     const veterinarioActual = await ExternosService.buscarVeterinarioPorEmail(req.usuario.email, token);
+                    console.log('📋 Veterinario encontrado:', veterinarioActual);
+
                     if (!veterinarioActual) {
+                        console.error('❌ No se encontró veterinario con email:', req.usuario.email);
                         return res.status(400).json({
                             success: false,
                             message: 'No se pudo encontrar el perfil del veterinario'
@@ -153,12 +158,17 @@ class CitasController {
                     console.log(`✅ Veterinario asignado automáticamente: ${veterinario_id}`);
                 } catch (error) {
                     console.error('❌ Error al obtener veterinario:', error);
+                    console.error('❌ Stack:', error.stack);
                     return res.status(500).json({
                         success: false,
-                        message: 'Error al obtener información del veterinario'
+                        message: 'Error al obtener información del veterinario',
+                        error: error.message
                     });
                 }
             }
+
+            console.log('✔️ Validando campos obligatorios...');
+            console.log('Valores:', { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo });
 
             // Validaciones básicas
             if (!cliente_dni || !mascota_id || !veterinario_id || !fecha || !hora || !motivo) {
@@ -167,6 +177,8 @@ class CitasController {
                     message: 'Todos los campos son obligatorios: cliente_dni, mascota_id, fecha, hora, motivo'
                 });
             }
+
+            console.log('✅ Validación de campos completada');
 
             // Verificar que el cliente existe
             const cliente = await ExternosService.verificarCliente(cliente_dni, token);
@@ -221,8 +233,12 @@ class CitasController {
                 observaciones: req.body.observaciones
             };
 
+            console.log('💾 Creando cita con datos:', datosCita);
+
             const citaId = await CitaModel.crear(datosCita);
             const nuevaCita = await CitaModel.obtenerPorId(citaId);
+
+            console.log('✅ Cita creada exitosamente con ID:', citaId);
 
             res.status(201).json({
                 success: true,
@@ -232,6 +248,7 @@ class CitasController {
         } catch (error) {
             console.error('❌ Error al crear cita:', error);
             console.error('❌ Error completo:', error.response?.data || error.message);
+            console.error('❌ Stack:', error.stack);
             res.status(500).json({
                 success: false,
                 message: 'Error al crear cita',
