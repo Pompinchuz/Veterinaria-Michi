@@ -406,6 +406,98 @@ class VentasController {
             });
         }
     }
+
+    // GET /api/ventas/graficos/por-dia - Ventas agrupadas por día para gráficos
+    static async ventasPorDiaGrafico(req, res) {
+        try {
+            const dias = parseInt(req.query.dias) || 30;
+            const ventas = await VentaModel.ventasPorDia(dias);
+
+            res.json({
+                success: true,
+                data: ventas,
+                periodo: `${dias} días`,
+                count: ventas.length
+            });
+
+        } catch (error) {
+            console.error('Error al obtener ventas por día:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener ventas por día',
+                error: error.message
+            });
+        }
+    }
+
+    // GET /api/ventas/graficos/por-metodo - Ventas por método de pago
+    static async ventasPorMetodoGrafico(req, res) {
+        try {
+            const dias = parseInt(req.query.dias) || 30;
+            const metodos = await VentaModel.ventasPorMetodoPagoPeriodo(dias);
+
+            res.json({
+                success: true,
+                data: metodos,
+                periodo: `${dias} días`,
+                count: metodos.length
+            });
+
+        } catch (error) {
+            console.error('Error al obtener ventas por método:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener ventas por método',
+                error: error.message
+            });
+        }
+    }
+
+    // GET /api/ventas/graficos/por-categoria - Ventas por categoría
+    static async ventasPorCategoriaGrafico(req, res) {
+        try {
+            const dias = parseInt(req.query.dias) || 30;
+            const categorias = await VentaModel.ventasPorCategoria(dias);
+
+            res.json({
+                success: true,
+                data: categorias,
+                periodo: `${dias} días`,
+                count: categorias.length
+            });
+
+        } catch (error) {
+            console.error('Error al obtener ventas por categoría:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener ventas por categoría',
+                error: error.message
+            });
+        }
+    }
+
+    // GET /api/ventas/graficos/por-hora - Ventas por hora
+    static async ventasPorHoraGrafico(req, res) {
+        try {
+            const dias = parseInt(req.query.dias) || 7;
+            const horas = await VentaModel.ventasPorHora(dias);
+
+            res.json({
+                success: true,
+                data: horas,
+                periodo: `${dias} días`,
+                count: horas.length
+            });
+
+        } catch (error) {
+            console.error('Error al obtener ventas por hora:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener ventas por hora',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = VentasController;
