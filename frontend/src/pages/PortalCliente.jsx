@@ -10,6 +10,8 @@ import ClientesService from '../services/clientes.service';
 import OrdenesService from '../services/ordenes.service';
 import CarritoFlotante from '../components/CarritoFlotante';
 import Modal from '../components/Modal';
+import ModalFactura from '../components/ModalFactura';
+
 import './PortalCliente.css';
 
 function PortalCliente() {
@@ -32,6 +34,10 @@ function PortalCliente() {
     const [procesandoCompra, setProcesandoCompra] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    // Estados para factura
+const [showFacturaModal, setShowFacturaModal] = useState(false);
+const [facturaActual, setFacturaActual] = useState(null);
+
 
     const { user, logout } = useAuth();
     const { carrito, agregarAlCarrito, actualizarCantidad, eliminarDelCarrito, vaciarCarrito, calcularTotal, getCantidadTotal } = useCarrito();
@@ -656,7 +662,14 @@ function PortalCliente() {
                         )}
                     </div>
                 )}
+                
             </Modal>
+            <ModalFactura
+    isOpen={showFacturaModal}
+    onClose={() => setShowFacturaModal(false)}
+    factura={facturaActual}
+    onDescargar={() => console.log("Factura descargada")}
+/>
         </div>
     );
 }
