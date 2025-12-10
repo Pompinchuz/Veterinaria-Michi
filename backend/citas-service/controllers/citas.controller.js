@@ -139,6 +139,7 @@ class CitasController {
             console.log('📦 Datos recibidos:', { cliente_dni, mascota_id, veterinario_id, fecha, hora, motivo });
 
             // ⭐ Si es veterinario, asignar automáticamente su propio ID
+            let veterinarioValidado = null; // Guardar veterinario ya validado
             if (req.usuario.rol === 'veterinario') {
                 try {
                     console.log('🔍 Buscando veterinario con email:', req.usuario.email);
@@ -155,6 +156,7 @@ class CitasController {
 
                     // Forzar el ID del veterinario autenticado
                     veterinario_id = veterinarioActual.id;
+                    veterinarioValidado = veterinarioActual; // Ya está validado
                     console.log(`✅ Veterinario asignado automáticamente: ${veterinario_id}`);
                 } catch (error) {
                     console.error('❌ Error al obtener veterinario:', error);
@@ -198,19 +200,25 @@ class CitasController {
                 });
             }
 
-            // Verificar que el veterinario existe y es veterinario
-            const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
-            if (!veterinario) {
-                return res.status(404).json({
-                    success: false,
-                    message: `No se encontró veterinario con ID: ${veterinario_id}`
-                });
-            }
-            if (veterinario.error) {
-                return res.status(400).json({
-                    success: false,
-                    message: veterinario.error
-                });
+            // ⭐ Solo verificar veterinario si NO fue asignado automáticamente
+            if (!veterinarioValidado) {
+                console.log('🔍 Verificando veterinario con ID:', veterinario_id);
+                const veterinario = await ExternosService.verificarVeterinario(veterinario_id, token);
+                if (!veterinario) {
+                    return res.status(404).json({
+                        success: false,
+                        message: `No se encontró veterinario con ID: ${veterinario_id}`
+                    });
+                }
+                if (veterinario.error) {
+                    return res.status(400).json({
+                        success: false,
+                        message: veterinario.error
+                    });
+                }
+                veterinarioValidado = veterinario;
+            } else {
+                console.log('✅ Veterinario ya validado, omitiendo verificación adicional');
             }
 
             // Verificar disponibilidad del veterinario en esa fecha/hora
