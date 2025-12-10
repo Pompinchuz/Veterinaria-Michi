@@ -67,6 +67,10 @@ class AuthMiddleware {
         return AuthMiddleware.verificarRol(['admin', 'veterinario', 'enfermera', 'recepcionista'])(req, res, next);
     }
 
+    static esPersonalVentas(req, res, next) {
+        return AuthMiddleware.verificarRol(['admin', 'enfermera', 'recepcionista'])(req, res, next);
+    }
+
     static esAdminORecepcionista(req, res, next) {
         return AuthMiddleware.verificarRol(['admin', 'recepcionista'])(req, res, next);
     }

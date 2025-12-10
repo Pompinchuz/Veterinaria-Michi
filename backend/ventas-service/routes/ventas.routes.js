@@ -18,7 +18,7 @@ router.get('/estadisticas/combinadas',
 );
 
 router.get('/dia',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esPersonalVentas,
     VentasController.ventasDelDia
 );
 
@@ -33,7 +33,7 @@ router.get('/top-productos-combinado',
 );
 
 router.get('/producto/:id/stats',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esPersonalVentas,
     VentasController.estadisticasProducto
 );
 
@@ -58,19 +58,19 @@ router.get('/graficos/por-hora',
     VentasController.ventasPorHoraGrafico
 );
 
-// Rutas principales
+// Rutas principales - Solo admin, enfermera y recepcionista
 router.get('/',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esPersonalVentas,
     VentasController.obtenerVentas
 );
 
 router.get('/:id',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esPersonalVentas,
     VentasController.obtenerVentaPorId
 );
 
 router.post('/',
-    AuthMiddleware.esPersonal,
+    AuthMiddleware.esPersonalVentas,
     VentasController.registrarVenta
 );
 
